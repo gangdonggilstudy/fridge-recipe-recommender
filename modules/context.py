@@ -1,0 +1,133 @@
+"""상황 분석 (시간대/월/날씨) — 월 해상도가 계절보다 3배 (명절·제철)."""
+
+from datetime import date, datetime
+
+from .contracts import Context
+from .logging_setup import get_logger
+
+_logger = get_logger(__name__)
+
+
+# (start, end) end 미포함. 야식 22~다음날 5시는 hour+24 정규화로 22~30 매칭.
+TIME_RANGES: dict[str, tuple[int, int]] = {
+    "아침": (6, 11),
+    "점심": (11, 15),
+    "저녁": (17, 22),
+    "야식": (22, 30),
+}
+
+# 시간 정규화 — 야식 매칭용 (0~5시 → 24~29시로 시프트)
+NIGHT_END_HOUR = 6
+HOURS_PER_DAY = 24
+
+
+# 가설 가중치 (운영 데이터로 재산출 예정). Cramér's V 효과 크기 추정 — 합 1.0.
+CONTEXT_WEIGHTS: dict[str, float] = {
+    "time":    0.55,
+    "weather": 0.29,
+    "month":   0.16,
+}
+
+
+# 계절 ↔ 월 매핑 — UI 입력은 계절 4개로 받고 내부에서 자동 확장,
+# 추천·표시 측은 month_to_season() 으로 역변환 (라벨링·점수는 월 기반)
+SEASON_TO_MONTHS: dict[str, list[int]] = {
+    "봄":   [3, 4, 5],
+    "여름": [6, 7, 8],
+    "가을": [9, 10, 11],
+    "겨울": [12, 1, 2],
+}
+
+# 역방향 lookup pre-compute — month_to_season 이 narrator/UI 에서 빈번 호출되어
+# 매번 4×3 선형 탐색하는 부담을 O(1) dict lookup 으로 교체.
+_MONTH_TO_SEASON: dict[int, str] = {
+    m: s for s, ms in SEASON_TO_MONTHS.items() for m in ms
+}
+
+
+def get_time_label(hour: int) -> str:
+    """0~23 범위 시각을 시간대 라벨로 변환. 매칭 없으면 '점심' 기본."""
+    if hour < 0 or hour >= HOURS_PER_DAY:
+        raise ValueError(f"hour out of range: {hour}")
+    # 0~5시는 야식(22~30) 매칭을 위해 24를 더해 정규화
+    adjusted = hour + HOURS_PER_DAY if hour < NIGHT_END_HOUR else hour
+    for label, (start, end) in TIME_RANGES.items():
+        if start <= adjusted < end:
+            return label
+    return "점심"  # 15~17시 fallback
+
+
+def get_month(today: date | None = None) -> str:
+    """현재 날짜 기반 월 라벨 자동 인식. 반환: '1월'~'12월'."""
+    if today is None:
+        today = date.today()
+    return f"{today.month}월"
+
+
+def month_to_season(month: str) -> str | None:
+    """월 라벨('9월') → 계절('가을'). UI 표시·자연어 narrator 용도."""
+    try:
+        month_num = int(month.rstrip("월"))
+    except (ValueError, AttributeError):
+        return None
+    return _MONTH_TO_SEASON.get(month_num)
+
+
+def compute_month_season_match(
+    context_month: str | None,
+    suitable_months: list[str] | None,
+) -> tuple[bool, bool]:
+    """블렌더 5·6번 피처 — 월/계절 매칭의 단일 출처.
+
+    - month_match: `context_month ∈ suitable_months`
+    - season_match: `month_to_season(context_month)` 가 suitable_months 의 어느 월의 계절과 일치
+
+    history INSERT(0/1 저장)와 build_feature(0.0/1.0 학습 입력)가 같은 함수를
+    호출하도록 통일 — 두 경로의 정의가 어긋나 학습/예측 데이터 불일치가 생기는
+    무성의한 버그를 막는다. 호출처는 결과를 필요한 타입(int/float)으로 캐스팅.
+    """
+    if not context_month or not suitable_months:
+        return False, False
+    month_match = context_month in suitable_months
+    season = month_to_season(context_month)
+    if not season:
+        return month_match, False
+    recipe_seasons = {s for m in suitable_months if (s := month_to_season(m))}
+    season_match = season in recipe_seasons
+    return month_match, season_match
+
+
+def get_current_hour(now: datetime | None = None) -> int:
+    if now is None:
+        now = datetime.now()
+    return now.hour
+
+
+class ContextAnalyzer:
+    """시간·날씨·월을 한 번에 조립하는 헬퍼."""
+
+    def __init__(self, weather_provider=None):
+        """weather_provider: get_weather() -> str 메서드를 가진 객체. None이면 '맑음' 사용."""
+        self.weather_provider = weather_provider
+
+    def get_context(self, now: datetime | None = None) -> Context:
+        now = now or datetime.now()
+        hour = now.hour
+        weather = self._fetch_weather()
+        month = get_month(now.date())
+        return {
+            "hour":    hour,
+            "time":    get_time_label(hour),
+            "weather": weather,
+            "month":   month,
+            "season":  month_to_season(month) or "봄",
+        }
+
+    def _fetch_weather(self) -> str:
+        if self.weather_provider is None:
+            return "맑음"
+        try:
+            return self.weather_provider.get_weather()
+        except Exception as e:  # noqa: BLE001 — 외부 API/네트워크 어떤 실패든 안전 폴백
+            _logger.warning("날씨 조회 실패, '맑음'으로 폴백: %s", e)
+            return "맑음"
