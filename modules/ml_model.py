@@ -37,12 +37,15 @@ def build_feature(
     context: dict | None = None,
 ) -> list[float]:
     """규칙 4점수 + 월·계절 매칭 → 6차원. 매치 계산은 history INSERT 와 단일 출처."""
+    # 앞 4개: 규칙 점수를 그대로 피처로 사용.
     base = [
         float(scores.get("ingredient", 0.0)),
         float(scores.get("consumption", 0.0)),
         float(scores.get("preference", 0.0)),
         float(scores.get("context", 0.0)),
     ]
+    # 뒤 2개: 월/계절 적합(0 또는 1). history 저장 때와 같은 함수를 써서
+    # 학습 데이터와 예측 입력이 어긋나지 않게 한다(train/serve skew 방지).
     month = (context or {}).get("month")
     months = (recipe or {}).get("suitable_month") or []
     m_match, s_match = compute_month_season_match(month, months)
@@ -84,10 +87,13 @@ class MLModel:
         60건처럼 그리드 벗어난 사용자가 영영 활성 안 되던 버그(리뷰 H1).
         """
         count = self.data_repo.count(user_id)
+        # 기록이 활성화 임계값(50) 미만이면 아직 학습 안 함 → 룰 레짐 유지.
         if count < self.threshold:
             return False
+        # 아직 모델이 없으면 첫 학습.
         if self.store.get(user_id) is None:
             return self.train(user_id)
+        # 모델이 있으면 마지막 학습 이후 +25건 이상 쌓였을 때만 재학습.
         last = self.store.last_trained_size(user_id)
         if last is None or (count - last) >= RETRAIN_INTERVAL:
             return self.train(user_id)

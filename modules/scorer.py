@@ -30,14 +30,18 @@ MONTH_MISMATCH_PENALTY = 0.25
 
 def build_recipe_vector(recipe: dict) -> dict[str, float]:
     """레시피 → 선호 벡터와 같은 키 공간(FEATURE_KEYS) one-hot 인코딩."""
+    # 모든 차원을 0.0 으로 깔고, 레시피가 해당하는 칸만 1.0 으로 켠다(one-hot).
     vec = dict.fromkeys(FEATURE_KEYS, 0.0)
 
+    # 스타일은 하나(한식/양식/...) → 해당 칸 1.0.
     if (style := recipe.get("style")) in vec:
         vec[style] = 1.0
+    # 맛은 여러 개일 수 있음 → 각 칸 1.0.
     for t in recipe.get("taste", []):
         if t in vec:
             vec[t] = 1.0
 
+    # 조리시간을 short/medium/long 구간으로 바꿔 그 칸 1.0.
     vec[cook_time_bucket(recipe.get("cook_time", 0))] = 1.0
 
     # 리뷰 키워드 차원
@@ -51,11 +55,15 @@ def preference_score(user_vector: dict[str, float], recipe: dict) -> float:
     """Cosine similarity. 선호 벡터 음수 허용(싫어요 누적) → 결과는 [0,1] 클리핑."""
     if not user_vector:
         return 0.0
+    # ① 사용자·레시피를 같은 FEATURE_KEYS 순서의 숫자 배열로 변환(차원 정렬 필수).
     recipe_vec = build_recipe_vector(recipe)
     user_arr = np.array([user_vector.get(k, 0.0) for k in FEATURE_KEYS]).reshape(1, -1)
     recipe_arr = np.array([recipe_vec.get(k, 0.0) for k in FEATURE_KEYS]).reshape(1, -1)
+    # ② 한쪽이라도 전부 0 이면 유사도 정의 불가 → 0.
     if not np.any(user_arr) or not np.any(recipe_arr):
         return 0.0
+    # ③ 코사인 유사도(두 벡터가 같은 방향일수록 1). 선호 벡터 음수 누적 시 음수가
+    #    나올 수 있어 [0,1] 로 클리핑(싫어요는 0으로 바닥 처리).
     raw = float(cosine_similarity(user_arr, recipe_arr)[0][0])
     return max(0.0, min(1.0, raw))
 
@@ -77,6 +85,7 @@ def month_score(recipe: dict, month: str | None = None) -> float:
 
 def context_score(recipe: dict, context: dict) -> float:
     """`CONTEXT_WEIGHTS` 가설 가중합 (운영 데이터로 재산출 예정)."""
+    # 시간(0.55)·날씨(0.29)·월(0.16) 적합도를 가중 평균. 시간대 비중이 가장 큼.
     return (
         CONTEXT_WEIGHTS["time"]    * time_score(recipe, context["hour"])
         + CONTEXT_WEIGHTS["weather"] * weather_score(recipe, context["weather"])
@@ -86,6 +95,8 @@ def context_score(recipe: dict, context: dict) -> float:
 
 def _sigmoid(z: float) -> float:
     """수치 안정 로지스틱."""
+    # 시그모이드 σ(z)=1/(1+e^-z) 를 부호별로 갈라 계산: 큰 음수에서 e^-z 가 오버플로
+    # 나는 것을 피하려고 z<0 일 땐 분자/분모에 e^z 를 곱한 동등식을 쓴다.
     if z >= 0.0:
         return 1.0 / (1.0 + math.exp(-z))
     ez = math.exp(z)
@@ -119,10 +130,12 @@ class Scorer:
         다양성·좋아요는 두 레짐 공통 투명 가산항. group_vector 는 cold-start
         보강용 (개인 기록·벡터 없을 때 그룹 평균으로 preference 보정).
         """
+        # 개인 선호 벡터가 없고 기록도 0인 신규 사용자면, 인구통계 그룹 평균으로 대체.
         effective_pref_vec = user_vector
         if not user_vector and history_count == 0 and group_vector:
             effective_pref_vec = group_vector
 
+        # 5요소 점수를 각각 계산해 dict 로 모음(아래에서 룰/블렌더로 합쳐짐).
         owned_names = {i["name"] for i in owned_items}
         components: dict = {
             "ingredient":  ingredient_score(
@@ -135,6 +148,7 @@ class Scorer:
             "context":     context_score(recipe, context),
             "diversity":   diversity_bonus,
         }
+        # ml_blend_fn 이 주어지면 학습된 LR 의 기여도 분해를 시도(실패 시 None → 룰).
         blend = None
         if ml_blend_fn is not None:
             try:
@@ -143,6 +157,7 @@ class Scorer:
                 _logger.warning("blender contribution failed; falling back to rule regime", exc_info=True)
                 blend = None
 
+        # 갈림길: 블렌더(학습됨) σ(z) vs 룰(고정 가중치 합).
         if blend is not None:
             base = self._apply_blend(components, blend)
         else:
@@ -151,13 +166,15 @@ class Scorer:
             components["intercept"] = 0.0
             components["ml"] = 0.0
 
+        # 좋아요 보너스는 두 레짐 공통의 투명 가산항.
         components["like_bonus"] = like_bonus
-        # base 보존 → recommender._apply_diversity 가 멱등 재계산.
+        # base(다양성 전 점수) 보존 → recommender._apply_diversity 가 멱등 재계산.
         components["base"] = base
         components["total"] = base + like_bonus
         return components
 
     def _rule_total(self, components: dict) -> float:
+        # 룰 레짐: 5요소에 고정 가중치를 곱해 단순 합산.
         return sum(
             self.weights[k] * components[k]
             for k in ("ingredient", "consumption", "preference", "context", "diversity")
@@ -165,9 +182,11 @@ class Scorer:
 
     def _apply_blend(self, components: dict, blend: dict) -> float:
         """충실성 불변: `intercept + Σcontrib == decision_function`."""
+        # 블렌더 레짐: 절편 + 피처별 기여도(wᵢ·xᵢ) 합 = z, 시그모이드로 0~1 확률화.
         z = float(blend["intercept"]) + sum(blend["contrib"].values())
         base = _sigmoid(z)
         components["combine"] = "blender"
+        # 기여도·절편을 그대로 보관 → explainer 가 "왜 이 추천?"을 정확히 분해 가능.
         components["contrib"] = dict(blend["contrib"])
         components["intercept"] = float(blend["intercept"])
         components["ml"] = base
