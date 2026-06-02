@@ -10,8 +10,12 @@
 | 3 | [03. 용어 사전](03_glossary.md) | 콜드스타트·레짐·선호벡터 등 고유 용어 |
 | 4 | [04. 추천 로직](04_recommendation_logic.md) | 점수 계산을 숫자 하나로 끝까지 따라가기 |
 | 5 | [05. 데이터 모델](05_data_model.md) | 저장 구조 + ER 다이어그램 |
-| 6 | [06. ML 풀어쓰기](06_ml_explained.md) | 개인 AI를 비전공자 언어로 |
+| 6 | [06. ML 풀어쓰기](06_ml_explained.md) | 개인 AI를 비전공자 언어로 (+자동학습·배포) |
 | 7 | [07. 사용 라이브러리](07_libraries.md) | 각 라이브러리가 뭐고 어디서 쓰이나 |
+| 8 | [08. 동의·GDPR](08_consent_gdpr.md) | 동의 버전관리·재동의·완전 삭제 |
+| 9 | [09. 레시피 카탈로그](09_recipe_catalog.md) | CSV→DB 빌드, 계절→월 확장 |
+| 10 | [10. 측정과 평가](10_measurement.md) | 좋아요 보너스 + CTR·A/B·랭킹지표 |
+| 11 | [11. 입력·콜드스타트](11_input_and_cold_start.md) | 재료 파싱·온보딩·위치/날씨 |
 | — | [CONTRIBUTING.md](../CONTRIBUTING.md) | 직접 코드를 고칠 때 (셋업·원칙·How-to) |
 
 ## 빠른 길잡이
