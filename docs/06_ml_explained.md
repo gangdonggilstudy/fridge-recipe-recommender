@@ -67,9 +67,13 @@ flowchart LR
 4. 학습된 모델을 **디스크 + 메모리에 저장**
 
 ```python
-sample_weight = 0.95 ** (오래된순서)   # 최신성 가중
+# 실제 코드: DECAY_RATE ** np.arange(n-1, -1, -1)
+# 최신 기록일수록 지수가 작음 → 가중치가 큼
+#   가장 최신: 0.95^0   = 1.0  (가장 중요)
+#   가장 오래됨: 0.95^(n-1) ≈ 0  (거의 무시)
+sample_weight = 0.95 ** (최신으로부터_떨어진_거리)
 model = LogisticRegression(C=1.0, max_iter=1000)
-model.fit(X, y, sample_weight=...)     # 가중치 학습
+model.fit(X, y, sample_weight=...)     # 최신성 가중 학습
 ```
 
 > 💡 **0.95의 일관성**: 선호 벡터도 매 갱신마다 ×0.95로 망각합니다. ML 학습 가중도 같은 0.95. **"오래된 건 덜 본다"는 원칙을 두 곳에서 똑같이** 적용합니다.
