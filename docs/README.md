@@ -11,6 +11,7 @@
 | 4 | [04. 추천 로직](04_recommendation_logic.md) | 점수 계산을 숫자 하나로 끝까지 따라가기 |
 | 5 | [05. 데이터 모델](05_data_model.md) | 저장 구조 + ER 다이어그램 |
 | 6 | [06. ML 풀어쓰기](06_ml_explained.md) | 개인 AI를 비전공자 언어로 |
+| 7 | [07. 사용 라이브러리](07_libraries.md) | 각 라이브러리가 뭐고 어디서 쓰이나 |
 | — | [CONTRIBUTING.md](../CONTRIBUTING.md) | 직접 코드를 고칠 때 (셋업·원칙·How-to) |
 
 ## 빠른 길잡이
