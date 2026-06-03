@@ -3,6 +3,16 @@
 > 📚 **이 프로젝트를 처음 이해하려면?** [docs/](docs/README.md) 의 초보자 문서부터 읽으세요
 > (개요 → 아키텍처 → 용어 사전 → 추천 로직). 아래는 실행 가이드입니다.
 
+## 빠른 시작 (원클릭)
+
+```bash
+python run.py
+```
+
+`.venv` 가 없으면 **자동으로** 가상환경 생성 → 의존성 설치 → `recipes.db` 빌드까지 한 뒤 앱을 띄웁니다 (아래 §1·§2 생략 가능). `app.db`(사용자·기록)는 첫 실행 시 새 스키마로 **자동 생성**됩니다. 데모 데이터만 따로 원하면 §4의 시드를 추가 실행하세요.
+
+> 아래 §1~§5는 단계별로 직접 제어하고 싶을 때의 **수동 설정**입니다.
+
 ## 1. 의존성 설치
 
 ```bash
@@ -63,6 +73,22 @@ streamlit run 🍽_사용자.py
 ```
 
 브라우저에서 `http://localhost:8501` 접속.
+
+## 6. 코드 업데이트 후 DB가 안 맞을 때 (기존 개발자)
+
+이 프로젝트는 **DB 마이그레이션을 운영하지 않습니다** — 스키마는 `modules/db_init.py` 단일 출처이고 `CREATE TABLE IF NOT EXISTS` 라, history/app.db **스키마가 바뀐 변경을 pull** 하면 기존 `data/app.db` 는 옛 컬럼 그대로라 `no such column ...` 같은 충돌이 날 수 있습니다 (예: ML 피처 변경으로 `month_match`/`season_match` → `temporal_fit`).
+
+- **app.db (사용자·기록)** — 삭제 후 재생성. 앱을 다시 실행하면 새 스키마로 자동 생성됩니다.
+  ```bash
+  # Windows
+  del data\app.db data\app.db-wal data\app.db-shm
+  # 데모 데이터까지 원하면 재시드
+  python scripts/seed_full.py
+  ```
+- **학습 모델 (`models/`)** — 피처 차원이 바뀌어도 옛 모델은 `feature_dim` 가드로 **자동 무효화·재학습**되어 보통 손댈 필요 없음. 깔끔히 비우려면 `models/` 폴더 삭제.
+- **recipes.db (레시피 카탈로그)** — CSV·빌드 로직이 바뀌었으면 재빌드: `python recipes/tools/build_recipes.py` (또는 `python scripts/setup.py --rebuild`).
+
+> 💡 **새로 clone 하는 사람은 해당 없음** — 처음부터 최신 스키마로 생성됩니다. 이 안내는 **예전 DB를 들고 있던** 경우에만 필요합니다.
 
 ## 폴더 구조
 
