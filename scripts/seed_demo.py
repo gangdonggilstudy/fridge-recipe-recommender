@@ -116,8 +116,8 @@ def seed_history_for(history_repo: HistoryRepo, user_id: str) -> None:
     n_total = pattern["n_total"]
     half = n_total // 2
 
-    # 3개 컨텍스트 + 각각의 (제철·비제철) recipe 페어 — 블렌더가 월/계절
-    # 차원(5·6번 피처)에 가중치를 학습하도록 매치/미스 시그널을 균형 시드.
+    # 3개 컨텍스트 + 각각의 (제철·비제철) recipe 페어 — 블렌더가 시기 적합
+    # 차원(5번 피처 temporal_fit)에 가중치를 학습하도록 매치/미스 시그널을 균형 시드.
     seasonal_slots = [
         ({"hour": 12, "weather": "맑음", "month": "4월"},   # 봄
          ["3월", "4월", "5월"], ["7월", "8월"]),

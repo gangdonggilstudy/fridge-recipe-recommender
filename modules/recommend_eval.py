@@ -6,9 +6,6 @@ from pathlib import Path
 
 from ._base_repo import BaseRepository
 
-# rec_rank NULL 행을 정렬 맨 뒤로.
-_RANK_NULL_SENTINEL = 10**9
-
 
 def ndcg_at_k(ranking: list[float], k: int = 5) -> float:
     """Normalized DCG @ K. ranking[i] ∈ {0, 1}. 결과 [0, 1]."""
@@ -123,49 +120,3 @@ class RecommendEvaluator(BaseRepository):
             if key in rule and key in blender:
                 delta[key] = round(blender[key] - rule[key], 4)
         return {"rule": rule, "blender": blender, "delta": delta}
-
-    def evaluate_offline(
-        self,
-        k: int = 5,
-        split_ratio: float = 0.8,
-        user_id: str | None = None,
-    ) -> dict[str, float]:
-        """시간순 행 단위 분할 — 시간 누수 방지 우선 (세션 경계 일부 분할 허용)."""
-        if not (0.0 < split_ratio < 1.0):
-            return {}
-
-        sql, args = self._apply_filters(
-            "SELECT user_id, session_id, selected, rec_rank, timestamp "
-            "FROM recommendation_impressions WHERE 1=1",
-            user_id,
-        )
-        sql += " ORDER BY timestamp"
-        with self._connect() as con:
-            rows = con.execute(sql, args).fetchall()
-
-        if not rows:
-            return {}
-
-        split_idx = int(len(rows) * split_ratio)
-        train_rows = rows[:split_idx]
-        test_rows = rows[split_idx:]
-
-        if not test_rows:
-            return {}
-
-        test_sessions: dict[object, list[tuple]] = {}
-        for i, r in enumerate(test_rows):
-            key = (r["user_id"], r["session_id"])
-            rk = r["rec_rank"] if r["rec_rank"] is not None else _RANK_NULL_SENTINEL
-            test_sessions.setdefault(key, []).append((rk, i, float(r["selected"] or 0)))
-        sessions = [
-            [sel for _, _, sel in sorted(v)] for v in test_sessions.values()
-        ]
-        if not sessions:
-            return {}
-
-        return {
-            **self._aggregate(sessions, k),
-            "train_size": float(len(train_rows)),
-            "test_size":  float(len(test_rows)),
-        }

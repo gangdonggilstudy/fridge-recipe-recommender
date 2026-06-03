@@ -40,6 +40,8 @@ SEASON_TO_MONTHS: dict[str, list[int]] = {
 
 # 역방향 lookup pre-compute — month_to_season 이 narrator/UI 에서 빈번 호출되어
 # 매번 4×3 선형 탐색하는 부담을 O(1) dict lookup 으로 교체.
+# SEASON_TO_MONTHS(계절→월목록)를 뒤집어 {월: 계절} 사전을 미리 만들어 둔다.
+#  ex) {3:"봄", 4:"봄", 5:"봄", 6:"여름", ...}
 _MONTH_TO_SEASON: dict[int, str] = {
     m: s for s, ms in SEASON_TO_MONTHS.items() for m in ms
 }
@@ -49,12 +51,13 @@ def get_time_label(hour: int) -> str:
     """0~23 범위 시각을 시간대 라벨로 변환. 매칭 없으면 '점심' 기본."""
     if hour < 0 or hour >= HOURS_PER_DAY:
         raise ValueError(f"hour out of range: {hour}")
-    # 0~5시는 야식(22~30) 매칭을 위해 24를 더해 정규화
+    # 야식 범위는 22~30시로 정의돼 있음. 자정 넘은 0~5시는 +24 해야 이 범위에 들어옴.
+    #  ex) 새벽 2시 → 26 → 야식(22~30) 매칭.
     adjusted = hour + HOURS_PER_DAY if hour < NIGHT_END_HOUR else hour
     for label, (start, end) in TIME_RANGES.items():
         if start <= adjusted < end:
             return label
-    return "점심"  # 15~17시 fallback
+    return "점심"  # 어느 구간에도 안 들면(15~17시) 기본값 점심
 
 
 def get_month(today: date | None = None) -> str:
@@ -73,28 +76,48 @@ def month_to_season(month: str) -> str | None:
     return _MONTH_TO_SEASON.get(month_num)
 
 
-def compute_month_season_match(
+def _compute_month_season_match(
     context_month: str | None,
     suitable_months: list[str] | None,
 ) -> tuple[bool, bool]:
-    """블렌더 5·6번 피처 — 월/계절 매칭의 단일 출처.
+    """`temporal_fit_score` 전용 내부 헬퍼 — 외부에서 호출 금지.
+
+    월·계절 매칭을 (month_match, season_match) 튜플로 분리 계산. 외부에는
+    `temporal_fit_score` 의 단일 서수만 노출하고, 이 함수는 그 내부 단계로만 존재.
 
     - month_match: `context_month ∈ suitable_months`
     - season_match: `month_to_season(context_month)` 가 suitable_months 의 어느 월의 계절과 일치
-
-    history INSERT(0/1 저장)와 build_feature(0.0/1.0 학습 입력)가 같은 함수를
-    호출하도록 통일 — 두 경로의 정의가 어긋나 학습/예측 데이터 불일치가 생기는
-    무성의한 버그를 막는다. 호출처는 결과를 필요한 타입(int/float)으로 캐스팅.
     """
     if not context_month or not suitable_months:
         return False, False
+    # month_match: 지금 '월'(예: 6월)이 레시피의 어울리는 월 목록에 정확히 있는가.
     month_match = context_month in suitable_months
     season = month_to_season(context_month)
     if not season:
         return month_match, False
+    # season_match: 레시피 어울리는 월들이 속한 '계절' 집합에 지금 계절이 포함되는가.
+    #  (월보다 느슨한 신호 — 6월은 안 맞아도 '여름'은 맞을 수 있음)
     recipe_seasons = {s for m in suitable_months if (s := month_to_season(m))}
     season_match = season in recipe_seasons
     return month_match, season_match
+
+
+def temporal_fit_score(
+    context_month: str | None,
+    suitable_months: list[str] | None,
+) -> float:
+    """월·계절 적합을 단일 서수로 — 1.0 월일치 / 0.5 계절만 / 0.0 불일치.
+
+    month_match ⟹ season_match 포함 관계라 두 차원은 공선 중복(계절 확장
+    레시피에선 동일 열). 0.5 단계(계절만 일치)만 고유 정보 → 한 서수로 통합.
+    history INSERT 와 build_feature 가 공유하는 단일 출처.
+    """
+    month_match, season_match = _compute_month_season_match(context_month, suitable_months)
+    if month_match:
+        return 1.0
+    if season_match:
+        return 0.5
+    return 0.0
 
 
 def get_current_hour(now: datetime | None = None) -> int:

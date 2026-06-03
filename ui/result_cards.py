@@ -69,12 +69,11 @@ def render_like(like_repo: LikeRepo, user_id: str, recipe_id: str) -> None:
     liked = like_repo.is_liked(user_id, recipe_id)
     count = like_repo.like_count(recipe_id)
 
-    col_btn, col_stats = st.columns([1, 5])
-
     btn_label = "❤️ 좋아요 취소" if liked else "🤍 좋아요"
-    if col_btn.button(btn_label, key=f"like_{recipe_id}"):
+    # 가로 전체 폭 — 좁은 컬럼에서 라벨이 줄바꿈되던 문제 해결.
+    if st.button(btn_label, key=f"like_{recipe_id}", use_container_width=True):
         like_repo.toggle_like(user_id, recipe_id)
         st.rerun()
 
     if count > 0:
-        col_stats.caption(f"❤️ × {count}")
+        st.caption(f"❤️ × {count}")

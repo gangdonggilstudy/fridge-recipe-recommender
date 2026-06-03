@@ -89,7 +89,7 @@ _CHART_HELP: dict[str, tuple[str, str]] = {
 | 모드 | 의미 |
 |---|---|
 | `rule` | 5요소 가중합 (ML 모델 활성화 전 또는 활성화 임계 미달 사용자) |
-| `blender` | 학습된 LR 블렌더가 6차원 피처로 결합 (활성화 사용자) |
+| `blender` | 학습된 LR 블렌더가 5차원 피처로 결합 (활성화 사용자) |
 
 - **blender > rule** → ML 학습이 추천 품질을 높이는 중 ✅
 - **rule ≈ blender** → ML 효과 아직 미미 (데이터 더 필요)
@@ -493,7 +493,7 @@ def _render_drift(history_repo: HistoryRepo, per_user: pd.DataFrame) -> None:
 
 
 def _render_eval_metrics(evaluator: RecommendEvaluator | None) -> None:
-    """추천 품질 메트릭 (NDCG/Recall/HitRate) — 전체 + 오프라인 시계열 분할."""
+    """추천 품질 메트릭 (NDCG/Recall/HitRate) — 노출 로그 기반 세션 단위."""
     if evaluator is not None:
         st.divider()
         _chart_header("📐 추천 품질 메트릭", "eval_metrics")
@@ -511,24 +511,6 @@ def _render_eval_metrics(evaluator: RecommendEvaluator | None) -> None:
                 col_b.metric("Recall@5", f"{result['recall']:.3f}")
                 col_c.metric("Hit Rate@5", f"{result['hit_rate']:.1%}")
                 col_d.metric("세션 수", f"{int(result['session_count']):,}")
-
-        # 시계열 분할 오프라인 평가
-        with st.expander("📈 오프라인 평가 (시계열 80/20 분할)", expanded=False):
-            st.caption(
-                "기록을 시간순 80% 학습 / 20% 검증으로 분할해 메트릭 산출."
-            )
-            if st.button("오프라인 평가 실행", key="offline_eval_run"):
-                offline = evaluator.evaluate_offline(k=5, split_ratio=0.8)
-                if not offline:
-                    st.warning("데이터가 부족하거나 분할 결과가 비어 있습니다.")
-                else:
-                    col_a, col_b, col_c = st.columns(3)
-                    col_a.metric("NDCG@5", f"{offline['ndcg']:.3f}")
-                    col_b.metric("Recall@5", f"{offline['recall']:.3f}")
-                    col_c.metric("Hit Rate@5", f"{offline['hit_rate']:.1%}")
-                    col_d, col_e = st.columns(2)
-                    col_d.metric("학습 데이터", f"{int(offline['train_size']):,}건")
-                    col_e.metric("검증 데이터", f"{int(offline['test_size']):,}건")
 
 
 def _render_feature_correlation(analyzer: FeatureAnalyzer) -> None:

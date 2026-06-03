@@ -9,18 +9,17 @@ from ._base_repo import BaseRepository
 
 
 def row_to_feature(row) -> list[float]:
-    """history row → 6차원 피처 벡터.
+    """history row → 5차원 피처 벡터.
 
-    `build_feature()` 와 반드시 같은 순서를 유지. match 컬럼이 NULL(구 데이터)
-    이면 0.0 — '매칭 불명' 으로 처리.
+    `build_feature()` 와 반드시 같은 순서를 유지. temporal_fit 이 NULL(recipe
+    미전달 INSERT) 이면 0.0 — '시기 불명' 으로 처리.
     """
     return [
         float(row["ingredient_score"] or 0.0),
         float(row["consumption_score"] or 0.0),
         float(row["preference_score"] or 0.0),
         float(row["context_score"] or 0.0),
-        float(row["month_match"] or 0.0),
-        float(row["season_match"] or 0.0),
+        float(row["temporal_fit"] or 0.0),
     ]
 
 
@@ -43,7 +42,7 @@ class TrainingDataRepository(BaseRepository):
         with self._connect() as con:
             rows = con.execute(
                 """SELECT ingredient_score, consumption_score, preference_score,
-                          context_score, month_match, season_match, selected
+                          context_score, temporal_fit, selected
                    FROM history WHERE user_id = ?
                    ORDER BY timestamp, rowid""",
                 (user_id,),

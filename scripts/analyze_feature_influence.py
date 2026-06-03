@@ -42,7 +42,7 @@ from modules.ml_model import FEATURE_LABELS, MLModel  # noqa: E402
 APP_DB = PROJECT_ROOT / "data" / "app.db"
 
 # 단일 출처 — XAI 카드(explainer)·블렌더 분해와 동일 라벨을 그대로 재사용
-# (modules.ml_model.build_feature 의 6차원 순서와 1:1, 드리프트 방지)
+# (modules.ml_model.build_feature 의 5차원 순서와 1:1, 드리프트 방지)
 FEATURE_NAMES = FEATURE_LABELS
 
 

@@ -42,8 +42,7 @@ CREATE TABLE IF NOT EXISTS history (
     hour               INTEGER,
     weather            TEXT,
     month              TEXT,           -- '1월'~'12월' (계절 4 → 월 12 해상도 확장)
-    month_match        INTEGER,        -- 0/1: context.month ∈ recipe.suitable_month (블렌더 5번 피처)
-    season_match       INTEGER,        -- 0/1: context 계절 ∈ recipe 의 어느 월 계절 (블렌더 6번 피처)
+    temporal_fit       REAL,           -- 0.0/0.5/1.0: 시기 적합 서수(월일치=1·계절만=0.5·불일치=0). 블렌더 5번 피처
     model_group        TEXT,           -- 실제 추천 레짐 (rule / blender)
     rec_rank           INTEGER,        -- 추천 리스트 내 위치(1-based). 평가 NDCG/Recall 순서용
     timestamp          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
