@@ -8,7 +8,7 @@ from sklearn.linear_model import LogisticRegression
 
 from ._base_repo import BaseRepository
 from .logging_setup import get_logger
-from .ml_model import FEATURE_COLUMNS, FEATURE_LABELS  # 6차원 (컬럼·라벨) 단일출처
+from .ml_model import FEATURE_COLUMNS, FEATURE_LABELS  # 5차원 (컬럼·라벨) 단일출처
 
 # 데이터 충분 임계 — 너무 적으면 상관계수/LR 가 의미 없음.
 MIN_ROWS_FOR_CORR = 10
@@ -24,10 +24,10 @@ class FeatureAnalyzer(BaseRepository):
         super().__init__(db_path, init_app_db=False)
 
     def _load_history_df(self) -> pd.DataFrame:
-        """history 의 피처 6컬럼 + selected 를 DataFrame 으로 로드.
+        """history 의 피처 5컬럼 + selected 를 DataFrame 으로 로드.
 
         NULL 은 0.0 으로 폴백 — `MLModel._row_to_feature` 의 `or 0.0` 패턴과
-        동일 의미. 구 데이터(`month_match`/`season_match` NULL) 호환.
+        동일 의미. recipe 미전달 INSERT(`temporal_fit` NULL) 호환.
 
         FEATURE_COLUMNS 가 변경됐는데 DB 마이그레이션이 안 끝난 환경에서도
         대시보드가 깨지지 않도록 OperationalError 는 빈 DataFrame 으로 폴백.
@@ -51,7 +51,7 @@ class FeatureAnalyzer(BaseRepository):
         """피처 × selected Pearson 상관계수 매트릭스 (한글 라벨).
 
         반환:
-            7×7 DataFrame — 6 피처(한글 라벨) + 'selected'.
+            6×6 DataFrame — 5 피처(한글 라벨) + 'selected'.
             데이터 부족(< MIN_ROWS_FOR_CORR) 또는 selected 분산 0 이면 빈 DataFrame.
         """
         df = self._load_history_df()

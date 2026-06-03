@@ -103,6 +103,24 @@ def compute_month_season_match(
     return month_match, season_match
 
 
+def temporal_fit_score(
+    context_month: str | None,
+    suitable_months: list[str] | None,
+) -> float:
+    """월·계절 적합을 단일 서수로 — 1.0 월일치 / 0.5 계절만 / 0.0 불일치.
+
+    month_match ⟹ season_match 포함 관계라 두 차원은 공선 중복(계절 확장
+    레시피에선 동일 열). 0.5 단계(계절만 일치)만 고유 정보 → 한 서수로 통합.
+    history INSERT 와 build_feature 가 공유하는 단일 출처.
+    """
+    month_match, season_match = compute_month_season_match(context_month, suitable_months)
+    if month_match:
+        return 1.0
+    if season_match:
+        return 0.5
+    return 0.0
+
+
 def get_current_hour(now: datetime | None = None) -> int:
     if now is None:
         now = datetime.now()

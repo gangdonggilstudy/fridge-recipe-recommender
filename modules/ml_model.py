@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .context import compute_month_season_match
+from .context import temporal_fit_score
 from .contracts import LinearContribution
 from .db_paths import get_app_db_path
 from .ml_training_data import TrainingDataRepository
@@ -14,17 +14,17 @@ from .user_model_store import UserModelStore
 ACTIVATION_THRESHOLD = 50
 RETRAIN_INTERVAL = 25
 LR_MAX_ITER = 1000
-# L2 강도 — 누적 데이터로 month vs season 가중치 분배되는 progressive learning 의 핵.
+# L2 강도 — 소표본 + 5차원에서 과적합 억제와 신호 보존의 균형.
 LR_C = 1.0
 
 # (history DB 컬럼, 한글 라벨) 페어 단일 출처 — 순서 어긋남을 컴파일타임에 차단.
+# 구 month_match·season_match 두 0/1 은 포함관계라 공선 중복 → temporal_fit 서수로 통합.
 FEATURES: tuple[tuple[str, str], ...] = (
     ("ingredient_score",  "재료 일치도"),
     ("consumption_score", "소모 우선순위"),
     ("preference_score",  "선호도"),
     ("context_score",     "상황 적합도"),
-    ("month_match",       "월 적합"),
-    ("season_match",      "계절 적합"),
+    ("temporal_fit",      "시기 적합"),
 )
 FEATURE_COLUMNS: tuple[str, ...] = tuple(col for col, _ in FEATURES)
 FEATURE_LABELS: list[str] = [label for _, label in FEATURES]
@@ -36,7 +36,7 @@ def build_feature(
     recipe: dict | None = None,
     context: dict | None = None,
 ) -> list[float]:
-    """규칙 4점수 + 월·계절 매칭 → 6차원. 매치 계산은 history INSERT 와 단일 출처."""
+    """규칙 4점수 + 시기 적합 서수(0/0.5/1) → 5차원. 계산은 history INSERT 와 단일 출처."""
     # 앞 4개: 규칙 점수를 그대로 피처로 사용.
     base = [
         float(scores.get("ingredient", 0.0)),
@@ -44,12 +44,11 @@ def build_feature(
         float(scores.get("preference", 0.0)),
         float(scores.get("context", 0.0)),
     ]
-    # 뒤 2개: 월/계절 적합(0 또는 1). history 저장 때와 같은 함수를 써서
+    # 5번째: 시기 적합 서수(0/0.5/1). history 저장 때와 같은 함수를 써서
     # 학습 데이터와 예측 입력이 어긋나지 않게 한다(train/serve skew 방지).
     month = (context or {}).get("month")
     months = (recipe or {}).get("suitable_month") or []
-    m_match, s_match = compute_month_season_match(month, months)
-    return base + [1.0 if m_match else 0.0, 1.0 if s_match else 0.0]
+    return base + [temporal_fit_score(month, months)]
 
 
 class MLModel:

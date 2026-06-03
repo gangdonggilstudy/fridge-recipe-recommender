@@ -3,20 +3,19 @@
 from pathlib import Path
 
 from ._base_repo import BaseRepository
-from .context import compute_month_season_match
+from .context import temporal_fit_score
 from .db_init import ensure_user
 
 
-def _extract_history_month_season_match(
+def _extract_history_temporal_fit(
     context: dict, recipe: dict | None,
-) -> tuple[int | None, int | None]:
-    """INSERT 시점 계산 — 학습 시 recipe 재조회·라벨 불일치 회피."""
+) -> float | None:
+    """INSERT 시점 '시기 적합' 서수(0/0.5/1) 계산 — 학습 시 recipe 재조회 회피."""
     if recipe is None:
-        return None, None
-    month_match, season_match = compute_month_season_match(
+        return None
+    return temporal_fit_score(
         context.get("month"), recipe.get("suitable_month") or [],
     )
-    return int(month_match), int(season_match)
 
 
 class HistoryRepo(BaseRepository):
@@ -34,18 +33,18 @@ class HistoryRepo(BaseRepository):
         rec_rank: int | None = None,
         recipe: dict | None = None,
     ) -> None:
-        """`recipe` 전달 시 블렌더 5·6번 피처(month/season match)도 컬럼 저장."""
+        """`recipe` 전달 시 블렌더 5번 피처(temporal_fit 시기 적합 서수)도 컬럼 저장."""
         ensure_user(self.db_path, user_id)
         context = context or {}
-        month_match, season_match = _extract_history_month_season_match(context, recipe)
+        temporal_fit = _extract_history_temporal_fit(context, recipe)
         with self._connect() as con:
             con.execute(
                 """INSERT INTO history
                    (user_id, recipe_id, selected,
                     ingredient_score, consumption_score, preference_score, context_score,
-                    hour, weather, month, month_match, season_match,
+                    hour, weather, month, temporal_fit,
                     model_group, rec_rank)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     user_id,
                     recipe_id,
@@ -57,8 +56,7 @@ class HistoryRepo(BaseRepository):
                     context.get("hour"),
                     context.get("weather"),
                     context.get("month"),
-                    month_match,
-                    season_match,
+                    temporal_fit,
                     model_group,
                     rec_rank,
                 ),
