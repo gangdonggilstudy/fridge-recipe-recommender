@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-final_term MD → HTML → PDF 빌드 파이프라인.
+프로젝트 MD → HTML → PDF 빌드 파이프라인.
 
 KaTeX 수식 + Mermaid 차트 + HTML 중간 산출물 지원.
 
@@ -45,7 +45,7 @@ import markdown as md_lib  # noqa: E402
 # ─────────────────────────────────────────
 # 경로 상수
 # ─────────────────────────────────────────
-PROJECT_ROOT = Path(__file__).resolve().parent.parent      # final_term/
+PROJECT_ROOT = Path(__file__).resolve().parent.parent      # 프로젝트/
 REPO_ROOT = PROJECT_ROOT.parent.parent.parent              # ssu_study/
 MERMAID_JS = REPO_ROOT / "2026-1" / "_shared" / "mermaid" / "mermaid.min.js"
 KATEX_DIR = REPO_ROOT / "2026-1" / "ai_math" / "교재" / "text_book" / "main" / "katex"
@@ -87,7 +87,7 @@ from _cli_utils import die, info, ok, section, warn  # noqa: E402
 # 1. 파일 탐색
 # ─────────────────────────────────────────
 def discover_all_files() -> list[Path]:
-    """final_term 의 모든 정식 .md 파일 (recipes/ 제외)."""
+    """프로젝트 의 모든 정식 .md 파일 (recipes/ 제외)."""
     files: list[Path] = []
     # 합본 순서대로 정렬해서 반환 — 단일 빌드에선 순서 무관, 합본에선 일치
     for rel in MERGE_ORDER:
@@ -103,7 +103,7 @@ def resolve_target(target: str) -> list[Path]:
     """CLI 인자를 파일 목록으로 해석.
 
     "all" → discover_all_files()
-    그 외 → 단일 파일 경로 (final_term/ 기준)
+    그 외 → 단일 파일 경로 (프로젝트/ 기준)
     """
     if target == "all":
         return discover_all_files()
@@ -522,11 +522,11 @@ def merge_pdfs(pdfs: list[tuple[Path, str]], out_path: Path) -> None:
 # ─────────────────────────────────────────
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="final_term MD → HTML → PDF 빌더 (KaTeX + Mermaid 지원)",
+        description="프로젝트 MD → HTML → PDF 빌더 (KaTeX + Mermaid 지원)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    p.add_argument("target", help='"all" 또는 단일 md 경로 (final_term 기준 상대경로)')
+    p.add_argument("target", help='"all" 또는 단일 md 경로 (프로젝트 기준 상대경로)')
     p.add_argument("--merge", action="store_true", help="개별 PDF + 합본 PDF (all_in_one.pdf)")
     p.add_argument("--keep-html", action="store_true", help="HTML 중간 산출물 유지")
     p.add_argument("--out", default="pdf_output", help="PDF 출력 디렉토리 (default: pdf_output)")

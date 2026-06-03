@@ -5,7 +5,7 @@
 
 흐름:
 1. `.venv` 가 없으면 `scripts/setup.py` 실행 (Python 검증·venv 생성·의존성 설치·recipes.db 빌드·테스트)
-2. `.venv/Scripts/python.exe -m streamlit run app.py` 로 앱 기동
+2. `.venv/Scripts/python.exe -m streamlit run 🍽_사용자.py --server.headless true` 로 앱 기동
 
 직접 호출되는 setup.py 도 동일 가정으로 작성됨 — 추가 환경 변수 없이 동작.
 """

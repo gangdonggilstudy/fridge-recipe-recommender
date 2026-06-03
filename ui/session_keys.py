@@ -73,6 +73,6 @@ class SessionKeys:
 
         picked_in_session 과 동일 구조 `(impression_session_id, set[recipe_id])`.
         같은 추천 화면에서 별로에요는 메뉴당 1회만 — 클릭↔별로에요 사이클로
-        -0.5 패널티가 무한 누적되는 것을 막는다. 새 추천 시 자동 초기화.
+        -1.5 학습 신호가 무한 누적되는 것을 막는다. 새 추천 시 자동 초기화.
         """
         return f"{SessionKeys.DISLIKED_IN_SESSION_PREFIX}{user_id}"

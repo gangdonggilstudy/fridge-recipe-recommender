@@ -26,7 +26,7 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
 
 VERSION = "1.1.0"
 
-# 프로젝트 루트는 본 스크립트의 두 단계 상위 (recipes/tools/ → recipes/ → final_term/)
+# 프로젝트 루트는 본 스크립트의 두 단계 상위 (recipes/tools/ → recipes/ → 프로젝트 루트)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 CSV_PATH = PROJECT_ROOT / "recipes" / "recipes_source.csv"
 DB_PATH = PROJECT_ROOT / "data" / "recipes.db"
