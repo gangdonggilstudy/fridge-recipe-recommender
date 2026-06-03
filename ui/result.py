@@ -17,6 +17,7 @@ from ui.result_cards import (
     render_card_ai,
     render_card_explanation,
     render_card_instructions,
+    render_like,
 )
 from ui.session_keys import SessionKeys
 
@@ -246,6 +247,9 @@ def _show_detail_dialog(
     render_card_instructions(recipe)
     render_card_explanation(recipe, explainer)
     render_card_ai(recipe, narrator, explainer)
+    if like_repo is not None:
+        render_like(like_repo, user_id, recipe["id"])
+
     st.divider()
     picked = SessionScopedSet(
         SessionKeys.picked_in_session_for(user_id), impression_session_id,
@@ -253,23 +257,7 @@ def _show_detail_dialog(
     disliked = SessionScopedSet(
         SessionKeys.disliked_in_session_for(user_id), impression_session_id,
     )
-
-    # 하단 액션행 — 좋아요·별로에요·닫기를 같은 레벨(동일 폭 버튼)로 정렬.
-    # 좋아요는 영구 즐겨찾기 토글(recipe_likes), 별로에요는 이 추천에 대한
-    # 1회성 학습 신호(history -1.5). 의미는 달라도 UI 위계는 통일.
-    if like_repo is not None:
-        col_like, col_dislike, col_close = st.columns(3)
-        liked = like_repo.is_liked(user_id, recipe["id"])
-        if col_like.button(
-            "❤️ 좋아요 취소" if liked else "🤍 좋아요",
-            use_container_width=True,
-            key=f"like_{recipe['id']}",
-        ):
-            like_repo.toggle_like(user_id, recipe["id"])
-            st.rerun()
-    else:
-        col_dislike, col_close = st.columns(2)
-
+    col_dislike, col_close = st.columns(2)
     if col_dislike.button(
         "👎 별로에요",
         use_container_width=True,
@@ -292,12 +280,6 @@ def _show_detail_dialog(
     ):
         st.session_state.pop(SessionKeys.detail_open_for(user_id), None)
         st.rerun()
-
-    # 좋아요 누적 카운트 — 액션행 아래 캡션으로 표시 (❤️ × N)
-    if like_repo is not None:
-        like_count = like_repo.like_count(recipe["id"])
-        if like_count > 0:
-            st.caption(f"❤️ × {like_count}")
 
 
 # ── 진입점 (호환 시그니처 보존) ──

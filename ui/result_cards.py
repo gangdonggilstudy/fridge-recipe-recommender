@@ -5,6 +5,7 @@ import streamlit as st
 
 from llm.narrator import Narrator
 from modules.explainer import Explainer
+from modules.like_repo import LikeRepo
 from ui.session_keys import SessionKeys
 
 
@@ -61,3 +62,19 @@ def render_card_ai(recipe: dict, narrator: Narrator, explainer: Explainer) -> No
                 top_reason = explainer.top_reason(recipe["scores"])
                 st.session_state[cache_key] = narrator.generate(recipe, top_reason)
         st.write(st.session_state[cache_key])
+
+
+def render_like(like_repo: LikeRepo, user_id: str, recipe_id: str) -> None:
+    """좋아요 토글 + 누적 카운트 표시."""
+    liked = like_repo.is_liked(user_id, recipe_id)
+    count = like_repo.like_count(recipe_id)
+
+    col_btn, col_stats = st.columns([1, 5])
+
+    btn_label = "❤️ 좋아요 취소" if liked else "🤍 좋아요"
+    if col_btn.button(btn_label, key=f"like_{recipe_id}"):
+        like_repo.toggle_like(user_id, recipe_id)
+        st.rerun()
+
+    if count > 0:
+        col_stats.caption(f"❤️ × {count}")
