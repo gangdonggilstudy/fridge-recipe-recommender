@@ -52,7 +52,7 @@ flowchart LR
     D -->|아니오| F["재동의 필요<br/>(버전 올랐거나 첫 방문)"]
 ```
 
-핵심 함수 ([db_init.py:183-215](../modules/db_init.py#L183)):
+핵심 함수 ([db_init.py:182-215](../modules/db_init.py#L182)):
 - `record_consent(db, user, version)` — 동의 시각 + 버전 저장
 - `has_consent(db, user)` — **현재 버전으로** 동의했는지 (옛 버전 동의는 무효)
 - `get_consent_info(db, user)` — 동의 기록 조회 (사이드바 표시용)
@@ -61,7 +61,7 @@ flowchart LR
 
 ## ③ 잊혀질 권리 — 완전 삭제
 
-코드: [`db_init.py:232-268`](../modules/db_init.py#L232) `delete_user_complete()`
+코드: [`db_init.py:231-268`](../modules/db_init.py#L231) `delete_user_complete()`
 
 사용자가 "데이터 삭제 요청 → 확인 체크 → 영구 삭제"를 누르면([consent.py:158-167](../ui/consent.py#L158)), 그 사용자의 **모든 흔적**을 지웁니다. 외래키 의존 순서대로 자식부터 삭제해 무결성 위반을 막습니다:
 

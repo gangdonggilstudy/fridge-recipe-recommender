@@ -73,7 +73,7 @@ penalty = 0.7
 
 ## ② 소모 우선순위 (consumption score) — 가중치 0.25
 
-코드: [`ingredient_matcher.consumption_score()`](../modules/ingredient_matcher.py#L63)
+코드: [`ingredient_matcher.consumption_score()`](../modules/ingredient_matcher.py#L73)
 
 각 재료의 임박도: `오늘 만료=1.0`, `7일 후=0.0` (선형 감소)
 
@@ -96,7 +96,7 @@ penalty = 0.7
 
 ## ③ 선호도 (preference score) — 가중치 0.20
 
-코드: [`scorer.preference_score()`](../modules/scorer.py#L50). 두 벡터의 **코사인 유사도**.
+코드: [`scorer.preference_score()`](../modules/scorer.py#L54). 두 벡터의 **코사인 유사도**.
 
 내 벡터와 레시피 벡터를 같은 칸에 늘어놓습니다(0이 아닌 것만 표시):
 
@@ -120,7 +120,7 @@ penalty = 0.7
 
 ## ④ 상황 적합도 (context score) — 가중치 0.15
 
-코드: [`scorer.context_score()`](../modules/scorer.py#L78). `0.55×시간 + 0.29×날씨 + 0.16×월`
+코드: [`scorer.context_score()`](../modules/scorer.py#L86). `0.55×시간 + 0.29×날씨 + 0.16×월`
 
 | 요소 | 판정 | 점수 |
 |---|---|---|
@@ -148,7 +148,7 @@ penalty = 0.7
 
 ## 합치기 (1): 룰 레짐 — 신규 사용자
 
-코드: [`Scorer._rule_total()`](../modules/scorer.py#L160). 데이터가 없으면 **고정 가중치**로 더합니다.
+코드: [`Scorer._rule_total()`](../modules/scorer.py#L176). 데이터가 없으면 **고정 가중치**로 더합니다.
 
 ```
 base = 0.35×재료  + 0.25×소모  + 0.20×선호  + 0.15×상황  + 0.05×다양성
@@ -224,7 +224,7 @@ flowchart LR
 
 ## 사용자가 선택하면? (학습 루프)
 
-추천 중 하나를 고르면 [`record_choice()`](../modules/recommender.py#L91)가:
+추천 중 하나를 고르면 [`record_choice()`](../modules/recommender.py#L96)가:
 
 1. **선호 벡터 갱신** — 전체에 ×0.95(망각) 후, 고른 레시피 특성에 +1.0
 2. **기록 저장** — 점수·상황·시기 적합(temporal_fit)을 history에 스냅샷

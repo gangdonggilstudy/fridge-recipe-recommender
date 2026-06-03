@@ -40,7 +40,7 @@ flowchart LR
 
 ## 5개의 입력 (피처)
 
-코드: [`ml_model.FEATURES`](../modules/ml_model.py#L21)
+코드: [`ml_model.FEATURES`](../modules/ml_model.py#L22)
 
 | # | 피처 | 의미 |
 |---|---|---|
@@ -86,7 +86,7 @@ model.fit(X, y, sample_weight=...)     # 최신성 가중 학습
 
 ## 언제 학습하나? (활성화 & 재학습)
 
-코드: [`MLModel.maybe_train()`](../modules/ml_model.py#L80)
+코드: [`MLModel.maybe_train()`](../modules/ml_model.py#L82)
 
 | 조건 | 동작 |
 |---|---|
@@ -122,7 +122,7 @@ flowchart TD
 ```
 
 ### ① 자동 트리거 — 매 피드백마다
-코드: [`Recommender.record_choice`](../modules/recommender.py#L91) → [`_safe_maybe_train`](../modules/recommender.py#L144)
+코드: [`Recommender.record_choice`](../modules/recommender.py#L96) → [`_safe_maybe_train`](../modules/recommender.py#L149)
 
 선택/거부할 때마다 `maybe_train()`이 호출됩니다. 단, 위의 학습 조건(50건/+25건)을
 통과할 때만 실제 학습이 일어나고, 평소엔 그냥 통과합니다. 학습이 **실패해도**
@@ -161,7 +161,7 @@ models/<user_id>/
 이게 "사용자가 쓸수록 즉시 똑똑해지는" 느낌의 정체입니다.
 
 ### ⑤ 스키마 안전장치 — 구버전 모델 자동 무효화
-코드: [`UserModelStore.get`](../modules/user_model_store.py#L41)
+코드: [`UserModelStore.get`](../modules/user_model_store.py#L32)
 
 피처를 5개에서 6개로 바꾸는 등 **모델 구조가 달라지면**, 디스크에 남은 옛 모델은
 입력 차원이 안 맞아 오작동할 수 있습니다. 이를 막기 위해 메타의 `feature_dim`을
@@ -197,7 +197,7 @@ models/<user_id>/
                     └─ 재료 기여 ─┘   └─ 소모 기여 ─┘
 ```
 
-코드: [`MLTrainer.linear_contributions()`](../modules/ml_trainer.py#L75)는 이 **기여도 하나하나를 그대로 반환**합니다. 그래서:
+코드: [`MLTrainer.linear_contributions()`](../modules/ml_trainer.py#L80)는 이 **기여도 하나하나를 그대로 반환**합니다. 그래서:
 
 - 사용자에게 *"유통기한 임박 재료를 활용할 수 있어요"* (가장 큰 기여)를 보여줄 수 있고
 - **충실성 불변식**: `절편 + 기여도 합 = 모델의 실제 계산값` 이 정확히 성립 → 설명이 거짓말이 아님

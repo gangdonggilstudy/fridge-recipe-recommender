@@ -69,7 +69,7 @@ STT가 "간장 양파 두부"를 "간장양파두부"로 붙여 내보내는 경
 
 ## 카드 → 선호 벡터
 
-고른 음식의 (스타일, 맛)에 점수를 줍니다 — **비대칭**으로([onboarding.py:114](../ui/onboarding.py#L114) → [preference.init_cold_start](../modules/preference.py#L59)):
+고른 음식의 (스타일, 맛)에 점수를 줍니다 — **비대칭**으로([onboarding.py:117](../ui/onboarding.py#L117) → [preference.init_cold_start](../modules/preference.py#L60)):
 - 좋아요 음식 → 해당 스타일·맛에 **+1.0**
 - 싫어요 음식 → **−0.5** (싫어요는 약한 신호)
 - 같은 음식이 양쪽이면 좋아요 우선
