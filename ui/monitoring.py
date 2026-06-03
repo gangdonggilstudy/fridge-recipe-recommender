@@ -499,7 +499,7 @@ def _render_eval_metrics(evaluator: RecommendEvaluator | None) -> None:
         _chart_header("📐 추천 품질 메트릭", "eval_metrics")
         st.caption(
             "추천 세션 단위로 평가한 순위 품질 지표. "
-            "노출 로그가 있으면 session_id/rec_rank 기준, 없으면 레거시 history 기준으로 계산합니다."
+            "노출 로그(session_id/rec_rank) 기준으로 계산합니다."
         )
         with st.expander("전체 평가 (모든 사용자)", expanded=False):
             result = evaluator.evaluate(k=5)

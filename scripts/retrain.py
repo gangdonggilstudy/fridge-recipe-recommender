@@ -6,7 +6,7 @@
     python scripts/retrain.py --user u1  # 특정 사용자만
 
 cron / 작업스케줄러 등록 예 (매일 새벽 3시):
-    0 3 * * * cd /path/to/final_term && .venv/bin/python scripts/retrain.py
+    0 3 * * * cd /path/to/fridge-recipe-recommender && .venv/bin/python scripts/retrain.py
 """
 
 import argparse

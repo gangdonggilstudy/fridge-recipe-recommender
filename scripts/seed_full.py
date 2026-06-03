@@ -4,7 +4,7 @@
 1. seed_demo: 데모 사용자 3명(demo_A/B/C) 선호 벡터 + 냉장고 재료
 2. demo_A/B 에 history 60건씩 (ML 활성화 임계값 50 통과)
 3. 관리자 사용자(gangdonggil) 에 history 80건 + 좋아요 다수 — 모니터링·드리프트·ML 모든 화면 진입 시 의미 있는 데이터
-4. seed_metrics: 31일치 recommendation_impressions 1,695 행 (사용자 5명·40 레시피·일별 분포)
+4. seed_metrics: 31일치 recommendation_impressions 약 1,870 행 (일별 분포)
 5. 추가 좋아요: 인기 레시피 시드 (스타일별·날짜별 분포)
 
 결정적(seed=42). 재실행 가능 — 기존 시드 데이터 clear 후 재시딩.

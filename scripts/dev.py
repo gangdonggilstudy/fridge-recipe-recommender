@@ -11,6 +11,7 @@
     rebuild   — recipes.db 재빌드
     lint      — ruff check
     format    — ruff format
+    pdf       — 문서/코드 PDF 빌드
 """
 
 import os
