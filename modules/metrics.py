@@ -144,7 +144,7 @@ class MetricsCalculator(BaseRepository):
     def per_group_summary(self, group_col: str = "model_group") -> pd.DataFrame:
         """추천 모드(rule/blender) 별 선택률.
 
-        history.model_group 컬럼 기준 — user_id 해시 기반 A/B 가 아니라 사용자의
+        recommendation_impressions.model_group 컬럼 기준 — user_id 해시 기반 A/B 가 아니라 사용자의
         ML 활성화 임계 통과 여부로 자연 분기된 모드별 CTR. (`ABTestManager` 는
         보존된 미사용 모듈.)
         """

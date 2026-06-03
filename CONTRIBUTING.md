@@ -47,7 +47,7 @@ python run.py        # 또는: streamlit run 🍽_사용자.py
 | 선호 벡터 차원 | `modules/preference.py` `FEATURE_KEYS` |
 | 맛 추론 마커 | `modules/normalize.py` `TASTE_MARKERS` |
 
-> ⚠️ 예: ML 피처를 추가하려면 `FEATURES` 튜플만 고치면 학습·예측·히스토리 컬럼이 따라옵니다. 여러 곳에 하드코딩하면 train/predict 스큐가 생깁니다.
+> ⚠️ 예: ML 피처를 바꿀 땐 `FEATURES` 튜플(라벨·순서·차원의 단일 출처)과 **함께** `build_feature`·history INSERT·`row_to_feature`/SELECT·`db_init` 스키마를 **같은 순서로 맞춰** 고쳐야 합니다(이들은 같은 컬럼명을 리터럴로 참조). 한쪽만 바꾸면 train/predict 스큐가 생깁니다.
 
 ### 2. 모든 외부 의존성에 fallback
 LLM·날씨·STT·OCR은 키가 없거나 실패해도 **앱이 죽으면 안 됩니다.** 새 외부 호출을 추가하면 `try/except` + 대체 경로를 반드시 넣으세요.
@@ -65,7 +65,7 @@ LLM·날씨·STT·OCR은 키가 없거나 실패해도 **앱이 죽으면 안 �
 ### 레시피 추가하기
 1. `recipes/recipes_source.csv`에 행 추가
 2. `python recipes/tools/build_recipes.py` 재실행 → `recipes.db` 갱신
-3. 맛(taste)·리뷰 키워드는 빌드 시 자동 추론됩니다
+3. 맛(taste)은 빌드 시 자동 추론됩니다 (리뷰 키워드는 빌드 후 `scripts/generate_review_keywords.py`로 별도 채움)
 
 ### 새 점수 요소 추가하기
 1. `modules/ingredient_matcher.py` 등에 순수 함수로 점수 계산 추가

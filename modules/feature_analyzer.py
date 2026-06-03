@@ -26,7 +26,7 @@ class FeatureAnalyzer(BaseRepository):
     def _load_history_df(self) -> pd.DataFrame:
         """history 의 피처 5컬럼 + selected 를 DataFrame 으로 로드.
 
-        NULL 은 0.0 으로 폴백 — `MLModel._row_to_feature` 의 `or 0.0` 패턴과
+        NULL 은 0.0 으로 폴백 — `ml_training_data.row_to_feature` 의 `or 0.0` 패턴과
         동일 의미. recipe 미전달 INSERT(`temporal_fit` NULL) 호환.
 
         FEATURE_COLUMNS 가 변경됐는데 DB 마이그레이션이 안 끝난 환경에서도

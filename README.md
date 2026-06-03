@@ -28,7 +28,7 @@ python recipes/tools/build_recipes.py
 | `WEATHER_API_KEY` | OpenWeatherMap — 날씨 추천 활성화 |
 | `LLM_PROVIDER` | `gemini` 또는 `openai` — AI 설명·영수증 OCR |
 | `LLM_API_KEY` | 위 공급자 API 키 |
-| `STT_ENABLED` | `true` 시 음성 입력 활성화 (faster-whisper 자동 설치) |
+| `STT_ENABLED` | `true` 시 음성 입력 활성화 (faster-whisper 설치돼 있어야 동작 — 미설치면 자동 비활성화) |
 | `RECEIPT_OCR_ENABLED` | `true` + `LLM_*` 가용 시 영수증 OCR 입력 노출 |
 | `ADMIN_USER_IDS` | 운영자 페이지 접근 user_id 콤마 구분 |
 

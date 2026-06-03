@@ -106,7 +106,7 @@ flowchart TD
 
 좌표가 정해지면 [`WeatherAPI`](../modules/weather_api.py)가 OpenWeatherMap을 조회해 **5종 enum**(맑음/비/눈/더위/추위)으로 분류합니다(날씨 코드 + 기온: 28°C↑ 더위, 5°C↓ 추위). 이 값이 상황 점수의 날씨 항이 됩니다([04. 추천 로직](04_recommendation_logic.md)).
 
-> 💡 모든 단계에 폴백: 날씨 키가 없거나 API가 실패해도 "맑음"으로 안전하게 떨어지므로([context.py](../modules/context.py#L126)) 추천은 항상 동작합니다.
+> 💡 모든 단계에 폴백: 날씨 키가 없거나 API가 실패해도 "맑음"으로 안전하게 떨어지므로([context.py](../modules/context.py#L151)) 추천은 항상 동작합니다.
 
 ---
 
