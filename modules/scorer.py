@@ -86,9 +86,13 @@ def month_score(recipe: dict, month: str | None = None) -> float:
 def context_score(recipe: dict, context: dict) -> float:
     """`CONTEXT_WEIGHTS` 가설 가중합 (운영 데이터로 재산출 예정)."""
     # 시간(0.55)·날씨(0.29)·월(0.16) 적합도를 가중 평균. 시간대 비중이 가장 큼.
+    # hour/weather 누락 시 미스 페널티로 폴백(부분 context 에도 안전; 정상 흐름은
+    # ContextAnalyzer.get_context 가 항상 채워 동작 불변). month 는 month_score 가 자체 폴백.
+    hour = context.get("hour")
+    weather = context.get("weather")
     return (
-        CONTEXT_WEIGHTS["time"]    * time_score(recipe, context["hour"])
-        + CONTEXT_WEIGHTS["weather"] * weather_score(recipe, context["weather"])
+        CONTEXT_WEIGHTS["time"]    * (time_score(recipe, hour) if hour is not None else TIME_MISMATCH_PENALTY)
+        + CONTEXT_WEIGHTS["weather"] * (weather_score(recipe, weather) if weather is not None else WEATHER_MISMATCH_PENALTY)
         + CONTEXT_WEIGHTS["month"]   * month_score(recipe, context.get("month"))
     )
 

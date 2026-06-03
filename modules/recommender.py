@@ -131,9 +131,10 @@ class Recommender:
         impression_repo: RecommendationImpressionRepo | None = None,
         impression_session_id: str | None = None,
     ) -> bool:
-        """'별로에요' — 직전 record_choice(selected=True) 의 거울 트랜잭션.
+        """'별로에요' — 직전 record_choice(selected=True) 의 (근사) 거울 트랜잭션.
 
-        impressions selected=0, 선호 벡터 -1.5(상쇄 +1.0 + 패널티 -0.5, DECAY 없음),
+        impressions selected=0, 선호 벡터 -1.5(근사 상쇄 -1.0 + 패널티 -0.5, DECAY
+        미복원이라 정확한 역연산은 아님 — preference.revert_then_dislike 참고),
         history 직전 row UPDATE selected=0, ml_model 비치명 재학습. context·rank 는
         record_choice 와 시그니처 일관성용.
         """

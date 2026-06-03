@@ -44,7 +44,7 @@ class MLTrainer:
         # 로지스틱 회귀 학습: X(피처)→y(선택 0/1), 최신 기록을 더 비중 있게.
         model = LogisticRegression(C=self.lr_c, max_iter=self.lr_max_iter)
         model.fit(X, y, sample_weight=sample_weight)
-        accuracy = float(model.score(X, y))
+        accuracy = float(model.score(X, y, sample_weight=sample_weight))
         self.store.put(
             user_id, model,
             training_size=int(len(y)),

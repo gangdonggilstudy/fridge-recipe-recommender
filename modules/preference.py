@@ -113,9 +113,15 @@ class PreferenceManager(BaseRepository):
     def revert_then_dislike(
         self, user_id: str, recipe: dict,
     ) -> dict[str, float]:
-        """직전 update(selected=True) +1.0 상쇄 + 패널티 -0.5 = -1.5. DECAY 미적용."""
-        # '별로에요'는 직전 선택(+1.0)을 되돌리고(-1.0) 추가로 -0.5 패널티 = -1.5.
-        # 직전 동작의 거울이므로 감쇠는 적용하지 않는다.
+        """직전 선택을 근사 상쇄(-1.0) + 패널티(-0.5) = -1.5 적용. DECAY 미적용.
+
+        주의: 정확한 역연산은 아니다. update(selected=True) 는 ×0.95 감쇠 *후* +1.0 을
+        더하므로, 이후 다른 update 로 그 +1.0 이 더 감쇠된다. 여기서는 단순 -1.5 를
+        빼므로(감쇠 미복원) 같은 차원이 의도보다 약간 더 음수로 내려갈 수 있다 —
+        선호는 preference_score 에서 [0,1] 클리핑되므로 영향은 작다(설계상 허용 근사).
+        """
+        # '별로에요'는 직전 선택(+1.0)을 근사 상쇄(-1.0)하고 -0.5 패널티 = -1.5.
+        # 직전 동작의 거울 성격이라 감쇠는 적용하지 않는다(근사).
         vec = self.load(user_id)
         self._apply_delta(vec, recipe, -1.5)
         self.save(user_id, vec)
