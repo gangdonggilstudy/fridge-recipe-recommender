@@ -122,7 +122,7 @@ flowchart TD
 ```
 
 ### ① 자동 트리거 — 매 피드백마다
-코드: [`Recommender.record_choice`](../modules/recommender.py#L96) → [`_safe_maybe_train`](../modules/recommender.py#L149)
+코드: [`Recommender.record_choice`](../modules/recommender.py#L96) → [`_safe_maybe_train`](../modules/recommender.py#L150)
 
 선택/거부할 때마다 `maybe_train()`이 호출됩니다. 단, 위의 학습 조건(50건/+25건)을
 통과할 때만 실제 학습이 일어나고, 평소엔 그냥 통과합니다. 학습이 **실패해도**

@@ -66,7 +66,7 @@ CTR = 선택된 추천 수 / 전체 노출 수
 > **노출 vs 선택 구분이 핵심**: `impressions`는 "보여졌다"(selected=0으로 시작), 클릭하면 selected=1로 갱신. 둘을 나눠야 CTR이 계산됩니다. → [05. 데이터 모델](05_data_model.md)의 impression vs history.
 
 ## 랭킹 지표 — 순위가 얼마나 좋은가
-코드: [`recommend_eval.py:13-45`](../modules/recommend_eval.py#L13)
+코드: [`recommend_eval.py:10-43`](../modules/recommend_eval.py#L10)
 
 CTR은 "골랐나"만 보지만, **순위 품질**은 "고른 걸 위쪽에 놨나"까지 봅니다:
 
@@ -77,7 +77,7 @@ CTR은 "골랐나"만 보지만, **순위 품질**은 "고른 걸 위쪽에 놨�
 | **HitRate@k** | 상위 k 안에 1개라도 적중한 세션 비율 | "추천이 헛스윙 안 한 비율" |
 
 ## A/B 비교 — 룰 vs 블렌더
-코드: [`recommend_eval.py:113`](../modules/recommend_eval.py#L113) `compare_regimes()`
+코드: [`recommend_eval.py:110`](../modules/recommend_eval.py#L110) `compare_regimes()`
 
 각 추천 기록에는 어떤 방식으로 점수를 냈는지(`model_group` = `rule`/`blender`)가 박혀 있습니다([05. 데이터 모델](05_data_model.md)). 이를 `model_group`으로 필터해 **두 레짐의 지표를 나란히 비교**합니다:
 ```
