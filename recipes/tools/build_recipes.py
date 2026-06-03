@@ -52,22 +52,23 @@ DROP TABLE IF EXISTS recipe_ingredients;
 DROP TABLE IF EXISTS meta;
 
 CREATE TABLE recipes (
-    id               TEXT PRIMARY KEY,
-    name             TEXT NOT NULL,
-    style            TEXT,
-    taste            TEXT,
-    cook_time        INTEGER,
-    difficulty       TEXT,
-    suitable_time    TEXT,
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    style TEXT,
+    taste TEXT,
+    cook_time INTEGER,
+    difficulty TEXT,
+    suitable_time TEXT,
     suitable_weather TEXT,
-    suitable_month   TEXT,                       -- '1월,9월' 형식 (계절 4 → 월 12 해상도 확장)
-    review_keywords  TEXT,                       -- Phase C: 리뷰 키워드 (콤마 구분, 빌드 후 별도 채움)
-    instructions     TEXT DEFAULT '',            -- 조리법 (시스템 레시피는 빈 값, 후속 SQL UPDATE 로 외부 링크/텍스트 채움)
-    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    suitable_month TEXT,
+    review_keywords TEXT,
+    instructions TEXT DEFAULT '',
+    source_url TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE recipe_ingredients (
-    recipe_id  TEXT,
+    recipe_id TEXT,
     ingredient TEXT,
     PRIMARY KEY (recipe_id, ingredient)
 );
@@ -75,7 +76,7 @@ CREATE TABLE recipe_ingredients (
 CREATE INDEX idx_ri_ingredient ON recipe_ingredients(ingredient);
 
 CREATE TABLE meta (
-    key   TEXT PRIMARY KEY,
+    key TEXT PRIMARY KEY,
     value TEXT
 );
 """
@@ -144,7 +145,14 @@ def build():
                 name = row["name"].strip()
                 style = validate_enum("style", row["style"])
                 difficulty = validate_enum("difficulty", row["difficulty"])
+                source_url = (row.get("source_url") or "").strip()
 
+                # source_url이 비어 있고 source_recipe_id가 있으면 만개의레시피 URL 생성
+                if not source_url:
+                    source_recipe_id = (row.get("source_recipe_id") or "").strip()
+                    if source_recipe_id:
+                        source_url = f"https://www.10000recipe.com/recipe/{source_recipe_id}"
+                        
                 # 재료 목록 먼저 확정 → 맛 자동 추론
                 raw_ings = [normalize_ingredient(i) for i in split_multi(row["ingredients"])]
                 tastes = infer_taste(raw_ings)
@@ -160,18 +168,32 @@ def build():
                 month_labels = [f"{m}월" for m in months]
 
                 cur.execute(
-                    """INSERT INTO recipes
-                       (id, name, style, taste, cook_time, difficulty,
-                        suitable_time, suitable_weather, suitable_month)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    """
+                    INSERT INTO recipes (
+                        id,
+                        name,
+                        style,
+                        taste,
+                        cook_time,
+                        difficulty,
+                        suitable_time,
+                        suitable_weather,
+                        suitable_month,
+                        source_url
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
                     (
-                        recipe_id, name, style,
+                        recipe_id,
+                        name,
+                        style,
                         ",".join(tastes),
                         int(row["cook_time"]),
                         difficulty,
                         ",".join(times),
                         ",".join(weathers),
                         ",".join(month_labels),
+                        source_url,
                     ),
                 )
 

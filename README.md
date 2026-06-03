@@ -29,6 +29,13 @@ pip install -r requirements.txt
 python recipes/tools/build_recipes.py
 ```
 
+만개의 크롤링한 데이터를 사용하려면:
+mysql 수집 데이터 -> csv 파일로 export 후 recipes.db 생성
+```bash
+python recipes/tools/export_from_recipe_project.py
+python recipes/tools/build_recipes.py
+```
+
 ## 3. 환경 변수 (선택)
 
 `.env.example` 을 `.env` 로 복사 후 필요한 키 입력:
@@ -100,5 +107,5 @@ streamlit run 🍽_사용자.py
 | `llm/` | LLM 호출 (narrator·parser) |
 | `pages/` | 운영자 페이지 |
 | `recipes/` | 레시피 카탈로그 빌드 |
+| `research` / `recipe_project`| 만개의 레시피 크롤링 및 분석 |
 | `scripts/` | 시드·재학습 등 보조 스크립트 |
-| `research/`| 데이터 크롤링 및 분석 |

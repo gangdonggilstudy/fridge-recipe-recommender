@@ -47,6 +47,7 @@ class Recipe(TypedDict):
     ingredients: list[str]
     review_keywords: list[str]
     instructions: str
+    source_url: NotRequired[str]
     is_custom: NotRequired[bool]
     scores: NotRequired[ScoreComponents]
 

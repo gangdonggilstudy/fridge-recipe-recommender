@@ -10,21 +10,31 @@ from ui.session_keys import SessionKeys
 
 
 def render_card_instructions(recipe: dict) -> None:
-    """조리법 — 상세 카드 상단에 직접 표시 (expander 없이 한 번에 보이도록).
+    """조리법 — 상세 카드 상단에 직접 표시.
 
-    시스템 레시피는 instructions 가 기본 빈 값. 그 경우엔 미등록 안내를 한 줄
-    띄워 사용자가 데이터 누락임을 명시적으로 인지하게 한다(향후 외부 링크 채움).
+    source_url이 있으면 만개의레시피 원본 링크를 함께 제공한다.
+    시스템 레시피는 instructions가 비어 있을 수 있으므로, 이 경우 원본 링크를 안내한다.
     """
     st.markdown("**📖 조리법**")
+
     instructions = (recipe.get("instructions") or "").strip()
+    source_url = (recipe.get("source_url") or "").strip()
+
+    if source_url:
+        st.markdown(f"🔗 [원본 레시피 보기]({source_url})")
+
     if not instructions:
-        st.caption("아직 등록된 조리법이 없습니다.")
+        if source_url:
+            st.caption("상세 조리법은 원본 레시피 링크에서 확인할 수 있습니다.")
+        else:
+            st.caption("아직 등록된 조리법이 없습니다.")
         return
+
     if instructions.startswith(("http://", "https://")):
         st.markdown(f"[외부 레시피 열기]({instructions})")
     else:
         st.markdown(instructions)
-
+        
 
 def render_card_explanation(recipe: dict, explainer: Explainer) -> None:
     """XAI 점수 비중 — 레짐(rule/blender)별 충실 분해."""

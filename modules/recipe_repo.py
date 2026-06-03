@@ -32,6 +32,7 @@ class RecipeRepo(BaseRepository):
             "ingredients":      ingredients,
             "review_keywords":  split_multi(row["review_keywords"]) if row["review_keywords"] else [],
             "instructions":     row["instructions"] or "",
+            "source_url": row["source_url"] or "",
         }
 
     def _ingredients_for(self, con: sqlite3.Connection, recipe_id: str) -> list[str]:
