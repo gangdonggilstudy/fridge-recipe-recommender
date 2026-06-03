@@ -52,7 +52,7 @@ flowchart LR
     D -->|아니오| F["재동의 필요<br/>(버전 올랐거나 첫 방문)"]
 ```
 
-핵심 함수 ([db_init.py:182-215](../modules/db_init.py#L182)):
+핵심 함수 ([db_init.py:182-228](../modules/db_init.py#L182)):
 - `record_consent(db, user, version)` — 동의 시각 + 버전 저장
 - `has_consent(db, user)` — **현재 버전으로** 동의했는지 (옛 버전 동의는 무효)
 - `get_consent_info(db, user)` — 동의 기록 조회 (사이드바 표시용)
