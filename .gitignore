@@ -27,3 +27,31 @@ models/
 # ── PDF 빌드 산출물 ──
 pdf_output/
 html_output/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# macOS
+.DS_Store
+
+# Local databases / data dumps
+*.db
+*.sqlite
+*.sqlite3
+*.csv
+*.xlsx
+
+# Recipe research project outputs
+research/recipe_project/outputs/
+research/recipe_project/.env
+research/recipe_project/.venv/
+research/recipe_project/__pycache__/
+research/recipe_project/**/__pycache__/

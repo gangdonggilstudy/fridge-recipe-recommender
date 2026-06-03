@@ -101,3 +101,4 @@ streamlit run 🍽_사용자.py
 | `pages/` | 운영자 페이지 |
 | `recipes/` | 레시피 카탈로그 빌드 |
 | `scripts/` | 시드·재학습 등 보조 스크립트 |
+| `research/`| 데이터 크롤링 및 분석 |
