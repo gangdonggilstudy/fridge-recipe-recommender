@@ -11,6 +11,9 @@ CREATE TABLE `raw_recipe` (
   `review_count` int DEFAULT NULL,
   `source_url` varchar(1000) DEFAULT NULL,
   `crawled_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `cook_time` int DEFAULT NULL,
+  `difficulty` varchar(20) DEFAULT NULL,
+  `avg_rating` decimal(3,2) DEFAULT NULL,
   PRIMARY KEY (`recipe_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

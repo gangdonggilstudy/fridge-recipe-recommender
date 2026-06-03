@@ -12,6 +12,9 @@ def upsert_raw_recipe(recipe: dict) -> None:
             , ingredients
             , steps
             , tags
+            , cook_time
+            , difficulty
+            , avg_rating
             , view_count
             , scrap_count
             , review_count
@@ -25,6 +28,9 @@ def upsert_raw_recipe(recipe: dict) -> None:
             , :ingredients
             , :steps
             , :tags
+            , :cook_time
+            , :difficulty
+            , :avg_rating
             , :view_count
             , :scrap_count
             , :review_count
@@ -37,6 +43,9 @@ def upsert_raw_recipe(recipe: dict) -> None:
             , ingredients   = COALESCE(NULLIF(VALUES(ingredients), ''), ingredients)
             , steps         = COALESCE(NULLIF(VALUES(steps), ''), steps)
             , tags          = COALESCE(NULLIF(VALUES(tags), ''), tags)
+            , cook_time     = COALESCE(VALUES(cook_time), cook_time)
+            , difficulty    = COALESCE(NULLIF(VALUES(difficulty), ''), difficulty)
+            , avg_rating    = COALESCE(VALUES(avg_rating), avg_rating)
             , view_count    = COALESCE(VALUES(view_count), view_count)
             , scrap_count   = COALESCE(VALUES(scrap_count), scrap_count)
             , review_count  = COALESCE(VALUES(review_count), review_count)
@@ -45,13 +54,15 @@ def upsert_raw_recipe(recipe: dict) -> None:
     """)
 
     recipe.setdefault("category_type", None)
+    recipe.setdefault("cook_time", None)
+    recipe.setdefault("difficulty", None)
+    recipe.setdefault("avg_rating", None)
     recipe.setdefault("view_count", None)
     recipe.setdefault("scrap_count", None)
     recipe.setdefault("review_count", None)
 
     with engine.begin() as conn:
         conn.execute(sql, recipe)
-
 
 def count_raw_recipes_by_category(category_type: str) -> int:
     sql = text("""
@@ -67,6 +78,31 @@ def count_raw_recipes_by_category(category_type: str) -> int:
 
     return int(row["recipe_count"])
 
+def count_raw_recipes_by_collect_type(collect_kind: str,collect_value: str) -> int:
+    column_map = {
+        "category": "category_types",
+        "ingredient": "ingredient_types",
+        "method": "method_types",
+        "situation": "situation_types",
+    }
+
+    column_name = column_map.get(collect_kind)
+
+    if not column_name:
+        raise ValueError(f"Unknown collect_kind: {collect_kind}")
+
+    sql = text(f"""
+        SELECT COUNT(*) AS recipe_count
+          FROM raw_recipe
+         WHERE FIND_IN_SET(:collect_value, {column_name}) > 0
+    """)
+
+    with engine.begin() as conn:
+        row = conn.execute(sql, {
+            "collect_value": collect_value
+        }).mappings().one()
+
+    return int(row["recipe_count"])
 
 def exists_raw_recipe(recipe_id: str) -> bool:
     sql = text("""
@@ -874,3 +910,68 @@ def count_recipe_daily_reaction() -> int:
         row = conn.execute(sql).mappings().one()
 
     return int(row["row_count"])
+
+def append_raw_recipe_collect_type(
+        recipe_id: str,
+        category_type: str | None = None,
+        ingredient_type: str | None = None,
+        method_type: str | None = None,
+        situation_type: str | None = None
+) -> None:
+    def append_unique(current_value: str | None, new_value: str | None) -> str | None:
+        if not new_value:
+            return current_value
+
+        values = []
+
+        if current_value:
+            values = [
+                value.strip()
+                for value in current_value.split(",")
+                if value.strip()
+            ]
+
+        if new_value not in values:
+            values.append(new_value)
+
+        return ",".join(values)
+
+    select_sql = text("""
+        SELECT category_types
+             , ingredient_types
+             , method_types
+             , situation_types
+          FROM raw_recipe
+         WHERE recipe_id = :recipe_id
+    """)
+
+    update_sql = text("""
+        UPDATE raw_recipe
+           SET category_types   = :category_types
+             , ingredient_types = :ingredient_types
+             , method_types     = :method_types
+             , situation_types  = :situation_types
+             , crawled_at       = CURRENT_TIMESTAMP
+         WHERE recipe_id = :recipe_id
+    """)
+
+    with engine.begin() as conn:
+        row = conn.execute(select_sql, {
+            "recipe_id": recipe_id
+        }).mappings().one_or_none()
+
+        if not row:
+            return
+
+        category_types = append_unique(row["category_types"], category_type)
+        ingredient_types = append_unique(row["ingredient_types"], ingredient_type)
+        method_types = append_unique(row["method_types"], method_type)
+        situation_types = append_unique(row["situation_types"], situation_type)
+
+        conn.execute(update_sql, {
+            "recipe_id": recipe_id,
+            "category_types": category_types,
+            "ingredient_types": ingredient_types,
+            "method_types": method_types,
+            "situation_types": situation_types,
+        })
