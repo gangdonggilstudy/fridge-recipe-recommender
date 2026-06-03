@@ -73,7 +73,7 @@ flowchart TD
 | `recipe_ingredients` | 레시피-재료 (1:N) | recipe_id, ingredient (PK 묶음) |
 | `meta` | 카탈로그 메타 | version, updated_at, recipe_count |
 
-`suitable_month`는 `"1월,9월"` 같은 콤마 문자열로 저장됩니다([build_recipes.py:174](../recipes/tools/build_recipes.py#L174)). 이게 나중에 추천 시 [`compute_month_season_match`](../modules/context.py)로 "지금 달/계절과 맞나" 판정의 입력이 됩니다.
+`suitable_month`는 `"1월,9월"` 같은 콤마 문자열로 저장됩니다([build_recipes.py:174](../recipes/tools/build_recipes.py#L174)). 이게 나중에 추천 시 [`temporal_fit_score`](../modules/context.py)로 "지금이 이 레시피에 얼마나 제철인가(0/0.5/1)" 판정의 입력이 됩니다.
 
 ---
 

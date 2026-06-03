@@ -80,8 +80,7 @@ erDiagram
         REAL consumption_score
         REAL preference_score
         REAL context_score
-        INTEGER month_match "ML 5번 피처"
-        INTEGER season_match "ML 6번 피처"
+        REAL temporal_fit "ML 5번 피처 (시기 적합 서수 0/0.5/1)"
         TEXT model_group "rule/blender"
         INTEGER rec_rank "추천 순위"
     }
@@ -143,17 +142,17 @@ erDiagram
 
 ## history 테이블이 특별한 이유 — ML의 연료
 
-`history`는 단순 로그가 아니라 **ML 학습 데이터셋**입니다. 추천을 선택/거부할 때 **그 순간의 6개 피처를 그대로 박제**합니다:
+`history`는 단순 로그가 아니라 **ML 학습 데이터셋**입니다. 추천을 선택/거부할 때 **그 순간의 5개 피처를 그대로 박제**합니다:
 
 ```
 ingredient_score, consumption_score, preference_score, context_score,  ← 4개 점수
-month_match, season_match                                              ← 2개 매칭
+temporal_fit                                                          ← 시기 적합 서수 (0/0.5/1)
 + selected (0/1)                                                       ← 정답 라벨
 ```
 
 나중에 `TrainingDataRepository`가 이 행들을 `(X, y)`로 읽어 로지스틱 회귀를 학습합니다. → 자세히는 [06_ml_explained.md](06_ml_explained.md)
 
-> 💡 **단일 출처 주의**: `month_match`/`season_match`는 저장할 때와 ML이 예측할 때 **같은 함수**(`context.compute_month_season_match`)로 계산합니다. 그래야 학습과 예측의 피처가 어긋나지 않습니다.
+> 💡 **단일 출처 주의**: `temporal_fit`은 저장할 때와 ML이 예측할 때 **같은 함수**(`context.temporal_fit_score`)로 계산합니다. 그래야 학습과 예측의 피처가 어긋나지 않습니다. (월·계절은 포함관계라 0/0.5/1 한 서수로 통합 — [06_ml_explained.md](06_ml_explained.md) 참고)
 
 ---
 

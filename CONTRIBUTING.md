@@ -42,7 +42,7 @@ python run.py        # 또는: streamlit run 🍽_사용자.py
 | DB 경로 | `modules/db_paths.py` |
 | DB 스키마 | `modules/db_init.py` `SCHEMA_SQL` |
 | ML 피처 순서 | `modules/ml_model.py` `FEATURES` |
-| month/계절 매칭 | `modules/context.py` `compute_month_season_match()` |
+| 시기 적합 (월·계절 통합) | `modules/context.py` `temporal_fit_score()` |
 | 재료 정규화·카테고리 | `modules/normalize.py` |
 | 선호 벡터 차원 | `modules/preference.py` `FEATURE_KEYS` |
 | 맛 추론 마커 | `modules/normalize.py` `TASTE_MARKERS` |

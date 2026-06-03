@@ -202,7 +202,7 @@ sequenceDiagram
 | DB 경로 | `db_paths.py` |
 | DB 스키마 | `db_init.py` |
 | ML 피처 순서 | `ml_model.FEATURES` 튜플 |
-| month/계절 매칭 | `context.compute_month_season_match()` |
+| 시기 적합 (월·계절 통합) | `context.temporal_fit_score()` |
 | 재료 정규화 | `normalize.normalize_ingredient()` |
 
 > 💡 왜 중요? 예를 들어 ML 피처 순서가 학습할 때와 예측할 때 다르면 모델이 엉뚱한 결과를 냅니다. 한 곳에서만 정의하면 그런 어긋남이 원천 차단됩니다.

@@ -89,7 +89,7 @@ _CHART_HELP: dict[str, tuple[str, str]] = {
 | 모드 | 의미 |
 |---|---|
 | `rule` | 5요소 가중합 (ML 모델 활성화 전 또는 활성화 임계 미달 사용자) |
-| `blender` | 학습된 LR 블렌더가 6차원 피처로 결합 (활성화 사용자) |
+| `blender` | 학습된 LR 블렌더가 5차원 피처로 결합 (활성화 사용자) |
 
 - **blender > rule** → ML 학습이 추천 품질을 높이는 중 ✅
 - **rule ≈ blender** → ML 효과 아직 미미 (데이터 더 필요)
