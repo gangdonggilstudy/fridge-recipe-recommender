@@ -8,6 +8,11 @@ import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+
+plt.rcParams["font.family"] = "AppleGothic"
+plt.rcParams["axes.unicode_minus"] = False
+
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sklearn.linear_model import LinearRegression
@@ -68,7 +73,9 @@ def draw_linear_regression(
         x_label,
         y_label,
         title,
-        file_name
+        file_name,
+        x_ticks=None,
+        x_tick_labels=None
 ):
     data = df[[x_col, y_col]].dropna()
 
@@ -101,6 +108,9 @@ def draw_linear_regression(
     plt.ylabel(y_label)
     plt.title(f"{title} / R2={r2:.3f}")
 
+    if x_ticks is not None and x_tick_labels is not None:
+        plt.xticks(x_ticks, x_tick_labels)
+
     plt.tight_layout()
 
     save_path = OUTPUT_DIR / file_name
@@ -109,35 +119,82 @@ def draw_linear_regression(
 
     print(f"Saved: {save_path}")
 
-
 def main():
     df = load_recipe_data()
     df = add_difficulty_score(df)
 
+    # 숫자 컬럼 정리
+    numeric_columns = [
+        "cook_time",
+        "avg_rating",
+        "review_count",
+        "scrap_count",
+        "view_count",
+    ]
+
+    for col in numeric_columns:
+        if col in df.columns:
+            df[col] = (
+                df[col]
+                .astype(str)
+                .str.replace(",", "", regex=False)
+                .str.strip()
+            )
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
     # 후기수, 스크랩수는 편차가 크므로 로그 변환
-    df["log_review_count"] = np.log1p(df["review_count"].fillna(0))
-    df["log_scrap_count"] = np.log1p(df["scrap_count"].fillna(0))
+    df["log_review_count"] = np.log1p(df["review_count"].fillna(0).astype(float))
+    df["log_scrap_count"] = np.log1p(df["scrap_count"].fillna(0).astype(float))
+    df["log_view_count"] = np.log1p(df["view_count"].fillna(0).astype(float))
 
     # 1. 요리시간 vs 후기수
     draw_linear_regression(
         df=df[df["cook_time"].notna() & (df["cook_time"] > 0)],
         x_col="cook_time",
-        y_col="log_review_count",
+        y_col="review_count", #"log_review_count",
         x_label="Cooking Time",
-        y_label="log(Review Count + 1)",
+        y_label="Review count", #"log(Review Count + 1)",
         title="Cooking Time vs Review Count",
         file_name="reg_cook_time_review_count.png"
+    )
+
+    # 1-1. 요리시간 vs 조회수
+    draw_linear_regression(
+        df=df[df["cook_time"].notna() & (df["cook_time"] > 0) & df["view_count"].notna()],
+        x_col="cook_time",
+        y_col="log_view_count",
+        x_label="Cooking Time",
+        y_label="log(View Count + 1)",
+        title="Cooking Time vs View Count",
+        file_name="reg_cook_time_view_count.png"
     )
 
     # 2. 난이도 vs 후기수
     draw_linear_regression(
         df=df[df["difficulty_score"].notna()],
         x_col="difficulty_score",
-        y_col="log_review_count",
-        x_label="Difficulty Score",
-        y_label="log(Review Count + 1)",
+        y_col="review_count", #"log_review_count",
+        x_label="Difficulty",
+        y_label="Review Count",#"log(Review Count + 1)",
         title="Difficulty vs Review Count",
-        file_name="reg_difficulty_review_count.png"
+        file_name="reg_difficulty_review_count.png",
+        # x_ticks=[1, 2, 3, 4, 5],
+        x_ticks=[1, 2, 3],
+        # x_tick_labels=["아무나", "초급", "중급", "고급", "신의경지"]
+        x_tick_labels=["아무나", "초급", "중급"]
+    )
+
+    # 2-1. 난이도 vs 조회수
+    draw_linear_regression(
+        df=df[df["difficulty_score"].notna() & df["view_count"].notna()],
+        x_col="difficulty_score",
+        y_col="log_view_count",
+        x_label="Difficulty",
+        y_label="log(View Count + 1)",
+        title="Difficulty vs View Count",
+        file_name="reg_difficulty_view_count.png",
+        x_ticks=[1, 2, 3, 4, 5],
+        x_tick_labels=["아무나", "초급", "중급", "고급", "신의경지"]
     )
 
     # 3. 요리시간 vs 평균평점
@@ -161,7 +218,6 @@ def main():
         title="Scrap Count vs Review Count",
         file_name="reg_scrap_review_count.png"
     )
-
 
 if __name__ == "__main__":
     main()

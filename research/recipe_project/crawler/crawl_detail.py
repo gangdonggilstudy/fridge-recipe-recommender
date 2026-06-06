@@ -236,6 +236,22 @@ def parse_ingredients(soup: BeautifulSoup) -> List[str]:
 
     return ingredients
 
+def extract_recipe_dates(soup):
+    text = soup.get_text(" ", strip=True)
+
+    reg_date = None
+    update_date = None
+
+    reg_match = re.search(r"등록일\s*:\s*(\d{4}-\d{2}-\d{2})", text)
+    update_match = re.search(r"수정일\s*:\s*(\d{4}-\d{2}-\d{2})", text)
+
+    if reg_match:
+        reg_date = reg_match.group(1)
+
+    if update_match:
+        update_date = update_match.group(1)
+
+    return reg_date, update_date
 
 def parse_recipe_detail(recipe_id: str) -> Dict:
     url = f"{BASE_URL}/recipe/{recipe_id}"
@@ -299,6 +315,8 @@ def parse_recipe_detail(recipe_id: str) -> Dict:
     if scrap_match:
         scrap_count = parse_int(scrap_match.group(1))
 
+    reg_date, update_date = extract_recipe_dates(soup)
+
     return {
         "recipe_id": recipe_id,
         "title": title,
@@ -312,6 +330,8 @@ def parse_recipe_detail(recipe_id: str) -> Dict:
         "view_count": view_count,
         "scrap_count": scrap_count,
         "review_count": review_count,
+        "reg_date": reg_date,
+        "update_date": update_date,
         "source_url": url
     }
 

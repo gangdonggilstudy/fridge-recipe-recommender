@@ -302,6 +302,34 @@ def insert_raw_recipe_review(review: dict[str, Any]) -> None:
     with engine.begin() as conn:
         conn.execute(sql, params)
 
+def upsert_raw_recipe_review(row: dict) -> None:
+    sql = text("""
+        INSERT INTO raw_recipe_review (
+              recipe_id
+            , review_seq
+            , review_date
+            , nickname
+            , review_content
+            , rating
+        )
+        VALUES (
+              :recipe_id
+            , :review_seq
+            , :review_date
+            , :nickname
+            , :review_content
+            , :rating
+        )
+        ON DUPLICATE KEY UPDATE
+              review_date    = VALUES(review_date)
+            , nickname       = VALUES(nickname)
+            , review_content = VALUES(review_content)
+            , rating         = VALUES(rating)
+            , crawled_at     = CURRENT_TIMESTAMP
+    """)
+
+    with engine.begin() as conn:
+        conn.execute(sql, row)
 
 def delete_raw_recipe_reviews(recipe_id: str) -> None:
     sql = text("""

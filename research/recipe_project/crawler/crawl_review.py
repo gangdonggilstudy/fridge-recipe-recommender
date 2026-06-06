@@ -91,23 +91,17 @@ def extract_rating(text: str) -> Optional[float]:
 
     return None
 
-
 def parse_reviews_from_html(html: str) -> list[dict]:
     soup = BeautifulSoup(html, "lxml")
 
     reviews = []
 
-    # 만개의레시피 페이지 구조가 바뀔 수 있으므로 후보 selector 여러 개 사용
+    # 너무 넓은 selector는 답글/중복을 같이 잡을 수 있으므로
+    # 우선순위대로 첫 번째로 잡히는 selector만 사용한다.
     review_selectors = [
         ".view_reply .media",
-        ".view_reply .media-body",
-        ".view_reply li",
-        ".comment_list li",
-        ".reply_list li",
-        ".review_list li",
-        "[class*='reply'] li",
-        "[class*='comment'] li",
-        "[class*='review'] li",
+        ".comment_list > li",
+        ".review_list > li",
     ]
 
     review_nodes = []
@@ -115,13 +109,22 @@ def parse_reviews_from_html(html: str) -> list[dict]:
     for selector in review_selectors:
         nodes = soup.select(selector)
 
-        if len(nodes) > len(review_nodes):
+        if nodes:
             review_nodes = nodes
+            print(f"[DEBUG] review selector used: {selector}, count={len(nodes)}")
+            break
 
     seen_texts = set()
 
     for node in review_nodes:
-        full_text = clean_text(node.get_text(" ", strip=True))
+        # 답글 node 자체면 제외
+        if is_reply_review_element(node):
+            continue
+
+        # 정상 리뷰 안에 답글 block이 섞여 있으면 제거
+        clean_node = remove_reply_blocks(node)
+
+        full_text = clean_text(clean_node.get_text(" ", strip=True))
 
         if not full_text:
             continue
@@ -144,7 +147,7 @@ def parse_reviews_from_html(html: str) -> list[dict]:
         ]
 
         for selector in nickname_selectors:
-            selected = node.select_one(selector)
+            selected = clean_node.select_one(selector)
             if selected:
                 nickname = clean_text(selected.get_text(" ", strip=True))
                 break
@@ -152,7 +155,6 @@ def parse_reviews_from_html(html: str) -> list[dict]:
         # 내용 후보
         content = ""
         content_selectors = [
-            ".media-body",
             ".reply_cont",
             ".comment",
             ".cont",
@@ -161,13 +163,18 @@ def parse_reviews_from_html(html: str) -> list[dict]:
         ]
 
         for selector in content_selectors:
-            selected = node.select_one(selector)
+            selected = clean_node.select_one(selector)
             if selected:
                 content = clean_text(selected.get_text(" ", strip=True))
                 break
 
         if not content:
             content = full_text
+
+        # 답글 버튼/불필요 문구 제거
+        content = content.replace("답글", " ")
+        content = content.replace("답글달기", " ")
+        content = clean_text(content)
 
         rating = extract_rating(full_text)
 
@@ -179,7 +186,6 @@ def parse_reviews_from_html(html: str) -> list[dict]:
         })
 
     return reviews
-
 
 def parse_recipe_reviews(recipe_id: str) -> list[dict]:
     url = f"https://www.10000recipe.com/recipe/{recipe_id}"
@@ -201,3 +207,91 @@ def parse_recipe_reviews(recipe_id: str) -> list[dict]:
         })
 
     return result
+    
+def is_reply_review_element(el) -> bool:
+    """
+    리뷰 답글/대댓글 영역이면 True.
+    단, 최상위 리뷰 컨테이너인 view_reply는 제외한다.
+    """
+
+    reply_class_keywords = [
+        "re_reply",
+        "comment_reply",
+        "review_reply",
+        "reply_comment",
+        "reply_answer",
+        "recomment",
+        "answer",
+    ]
+
+    class_text = " ".join(el.get("class", []))
+    class_text_lower = class_text.lower()
+
+    # 직접 class가 답글성 class인 경우
+    if any(keyword in class_text_lower for keyword in reply_class_keywords):
+        return True
+
+    # class가 그냥 reply인 경우는 답글일 가능성이 있음
+    # 단 view_reply는 전체 리뷰 영역이므로 제외
+    class_names = set(el.get("class", []))
+    if "reply" in class_names and "view_reply" not in class_names:
+        return True
+
+    # 부모를 올라가며 답글 영역인지 확인
+    # 단 view_reply를 만나면 정상 리뷰 영역이므로 탐색 중단
+    parent = el.find_parent()
+
+    while parent:
+        parent_class_names = set(parent.get("class", []))
+        parent_class_text = " ".join(parent.get("class", [])).lower()
+
+        if "view_reply" in parent_class_names:
+            break
+
+        if any(keyword in parent_class_text for keyword in reply_class_keywords):
+            return True
+
+        if "reply" in parent_class_names and "view_reply" not in parent_class_names:
+            return True
+
+        parent = parent.find_parent()
+
+    text = el.get_text(" ", strip=True)
+
+    if text.startswith("답글"):
+        return True
+
+    if "답글달기" in text:
+        return True
+
+    return False
+
+def remove_reply_blocks(node):
+    """
+    리뷰 node 내부에 답글 영역이 섞여 있으면 제거한 복사본을 반환한다.
+    원본 soup는 건드리지 않는다.
+    """
+
+    copied_soup = BeautifulSoup(str(node), "lxml")
+
+    reply_selectors = [
+        ".re_reply",
+        ".comment_reply",
+        ".review_reply",
+        ".reply_comment",
+        ".reply_answer",
+        ".recomment",
+        ".answer",
+        "[class*='re_reply']",
+        "[class*='comment_reply']",
+        "[class*='review_reply']",
+        "[class*='reply_comment']",
+        "[class*='reply_answer']",
+        "[class*='recomment']",
+    ]
+
+    for selector in reply_selectors:
+        for reply_el in copied_soup.select(selector):
+            reply_el.decompose()
+
+    return copied_soup

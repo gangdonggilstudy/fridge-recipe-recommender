@@ -21,7 +21,7 @@ from pathlib import Path
 
 import pandas as pd
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, inspect
 
 
 # recipes/tools/ → recipes/ → 프로젝트 루트
@@ -104,39 +104,60 @@ def get_engine():
 
     return create_engine(db_url)
 
-
 def table_has_column(engine, table_name: str, column_name: str) -> bool:
-    sql = text("""
-        SELECT COUNT(*) AS cnt
-          FROM INFORMATION_SCHEMA.COLUMNS
-         WHERE TABLE_SCHEMA = DATABASE()
-           AND TABLE_NAME = :table_name
-           AND COLUMN_NAME = :column_name
-    """)
+    """
+    DB 종류와 무관하게 컬럼 존재 여부를 확인한다.
+    SQLite / MySQL 모두 대응.
+    """
 
-    with engine.begin() as conn:
-        row = conn.execute(sql, {
-            "table_name": table_name,
-            "column_name": column_name,
-        }).mappings().one()
+    inspector = inspect(engine)
 
-    return int(row["cnt"]) > 0
+    if table_name not in inspector.get_table_names():
+        return False
 
+    columns = inspector.get_columns(table_name)
+    column_names = [column["name"] for column in columns]
+
+    return column_name in column_names
+# def table_has_column(engine, table_name: str, column_name: str) -> bool:
+#     sql = text("""
+#         SELECT COUNT(*) AS cnt
+#           FROM INFORMATION_SCHEMA.COLUMNS
+#          WHERE TABLE_SCHEMA = DATABASE()
+#            AND TABLE_NAME = :table_name
+#            AND COLUMN_NAME = :column_name
+#     """)
+
+#     with engine.begin() as conn:
+#         row = conn.execute(sql, {
+#             "table_name": table_name,
+#             "column_name": column_name,
+#         }).mappings().one()
+
+#     return int(row["cnt"]) > 0
 
 def table_exists(engine, table_name: str) -> bool:
-    sql = text("""
-        SELECT COUNT(*) AS cnt
-          FROM INFORMATION_SCHEMA.TABLES
-         WHERE TABLE_SCHEMA = DATABASE()
-           AND TABLE_NAME = :table_name
-    """)
+    """
+    DB 종류와 무관하게 테이블 존재 여부를 확인한다.
+    SQLite / MySQL 모두 대응.
+    """
 
-    with engine.begin() as conn:
-        row = conn.execute(sql, {
-            "table_name": table_name,
-        }).mappings().one()
+    inspector = inspect(engine)
+    return table_name in inspector.get_table_names()
+# def table_exists(engine, table_name: str) -> bool:
+#     sql = text("""
+#         SELECT COUNT(*) AS cnt
+#           FROM INFORMATION_SCHEMA.TABLES
+#          WHERE TABLE_SCHEMA = DATABASE()
+#            AND TABLE_NAME = :table_name
+#     """)
 
-    return int(row["cnt"]) > 0
+#     with engine.begin() as conn:
+#         row = conn.execute(sql, {
+#             "table_name": table_name,
+#         }).mappings().one()
+
+#     return int(row["cnt"]) > 0
 
 
 def load_recipe_project_data(

@@ -8,6 +8,14 @@ from db.repository import (
 from pipeline.main_ingredient_extractor import calculate_main_ingredient_scores
 
 
+def to_is_main_value(is_main: str) -> int:
+    """
+    calculate_main_ingredient_scores() 결과의 Y/N 값을
+    DB 저장용 1/0 값으로 명확히 변환한다.
+    """
+    return 1 if is_main == "Y" else 0
+
+
 def main():
     rows = find_recipes_for_main_ingredient_marking()
 
@@ -40,17 +48,32 @@ def main():
         )
 
         for result in results:
+            is_main_value = to_is_main_value(result["is_main"])
+
+            # 채반 디버그용
+            if "채반" in result["ingredient_name"]:
+                print(
+                    "[DEBUG 채반]",
+                    f"recipe_id={recipe_id}",
+                    f"ingredient_name={repr(result['ingredient_name'])}",
+                    f"normalized_name={repr(result.get('normalized_name'))}",
+                    f"result_is_main={repr(result['is_main'])}",
+                    f"is_main_value={is_main_value}",
+                    f"score={result['score']}",
+                    f"match_type={result['match_type']}",
+                )
+
             update_main_ingredient_flag(
                 recipe_id=recipe_id,
                 ingredient_name=result["ingredient_name"],
-                is_main=result["is_main"],
+                is_main=is_main_value,
                 main_score=result["score"],
                 main_match_type=result["match_type"]
             )
 
             updated_count += 1
 
-            if result["is_main"] == "Y":
+            if is_main_value == 1:
                 main_count += 1
 
         main_ingredients = [

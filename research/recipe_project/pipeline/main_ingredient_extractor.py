@@ -4,7 +4,7 @@ from typing import List, Dict
 
 EXCLUDE_MAIN_INGREDIENTS = {
     # 기본 양념/조미료
-    "소금", "설탕", "물", "간장", "국간장", "진간장", "집간장",
+    "소금", "굵은소금", "고운소금 마지막 간 보며 넣기", "설탕", "물", "간장", "국간장", "진간장", "집간장",
     "참기름", "들기름", "식용유", "올리브유", "올리브오일",
     "후추", "후춧가루", "고춧가루", "고추가루", "고추장", "된장",
     "맛술", "올리고당", "물엿", "식초", "굴소스", "참치액", "액젓",
@@ -17,7 +17,7 @@ EXCLUDE_MAIN_INGREDIENTS = {
     "통깨", "깨", "깨소금",
 
     # 도구/수량/단위가 잘못 들어온 경우
-    "도마", "냄비", "프라이팬", "볼", "접시", "국자", "채반",
+    "도마", "냄비", "프라이팬", "볼", "접시", "국자", "채반", "국그릇", "계량컵",
     "조리용나이프", "요리스푼", "요리젓가락", "뒤집개",
     "2개", "3개", "4개", "2T", "3T", "2큰술", "2스푼"
 }
@@ -54,11 +54,42 @@ def is_excluded_main_ingredient(ingredient_name: str) -> bool:
     if not ingredient_name:
         return True
 
-    if ingredient_name in EXCLUDE_MAIN_INGREDIENTS:
+    normalized_name = normalize_text(ingredient_name)
+
+    normalized_excludes = {
+        normalize_text(item)
+        for item in EXCLUDE_MAIN_INGREDIENTS
+    }
+
+    if normalized_name in normalized_excludes:
+        return True
+
+    # 포함형 도구 제외
+    non_food_keywords = [
+        "채반",
+        "도마",
+        "냄비",
+        "프라이팬",
+        "후라이팬",
+        "볼",
+        "접시",
+        "국그릇",
+        "계량컵",
+        "국자",
+        "체망",
+        "체",
+        "면보",
+        "키친타월",
+        "종이호일",
+        "랩",
+        "위생봉투",
+    ]
+
+    if any(keyword in normalized_name for keyword in non_food_keywords):
         return True
 
     # 숫자가 들어간 값은 재료가 아니라 수량/단위로 보고 제외
-    if re.search(r"\d", ingredient_name):
+    if re.search(r"\d", normalized_name):
         return True
 
     return False

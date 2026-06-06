@@ -310,6 +310,34 @@ def insert_raw_recipe_review(review: dict[str, Any]) -> None:
     with engine.begin() as conn:
         conn.execute(sql, params)
 
+def upsert_raw_recipe_review(row: dict) -> None:
+    sql = text("""
+        INSERT INTO raw_recipe_review (
+              recipe_id
+            , review_seq
+            , review_date
+            , nickname
+            , review_content
+            , rating
+        )
+        VALUES (
+              :recipe_id
+            , :review_seq
+            , :review_date
+            , :nickname
+            , :review_content
+            , :rating
+        )
+        ON CONFLICT(recipe_id, review_seq) DO UPDATE SET
+              review_date    = excluded.review_date
+            , nickname       = excluded.nickname
+            , review_content = excluded.review_content
+            , rating         = excluded.rating
+            , crawled_at     = CURRENT_TIMESTAMP
+    """)
+
+    with engine.begin() as conn:
+        conn.execute(sql, row)
 
 def delete_raw_recipe_reviews(recipe_id: str) -> None:
     sql = text("""
@@ -807,7 +835,7 @@ def reset_main_ingredient_flags(
 def update_main_ingredient_flag(
         recipe_id: str,
         ingredient_name: str,
-        is_main: bool | int = True,
+        is_main: bool | int | str = True,
         **kwargs
 ) -> None:
     """
@@ -823,6 +851,11 @@ def update_main_ingredient_flag(
     if not recipe_id or not ingredient_name:
         return
 
+    if isinstance(is_main, str):
+        is_main_value = 1 if is_main.upper() in ("Y", "1", "TRUE") else 0
+    else:
+        is_main_value = 1 if is_main in (True, 1) else 0
+
     sql = text("""
         UPDATE raw_recipe_ingredients
            SET is_main = :is_main
@@ -834,9 +867,8 @@ def update_main_ingredient_flag(
         conn.execute(sql, {
             "recipe_id": recipe_id,
             "ingredient_name": ingredient_name,
-            "is_main": 1 if is_main else 0,
+            "is_main": is_main_value,
         })
-
 
 def update_raw_recipe_ingredient_is_main(
         recipe_id: str,
