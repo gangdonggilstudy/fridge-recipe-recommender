@@ -104,20 +104,6 @@ NDCG = 1위 선택 > 3위 선택 > 5위 선택 (로그 감쇠 가중치 적용 �
 
 > Pearson 0.7 기준은 통계학 경험적 분류(Evans 1996). 소표본에서는 기준을 낮게 잡아야 합니다.""",
     ),
-    "feat_dist": (
-        "피처 분포 박스플롯 읽는 법",
-        """\
-**선택된 레시피 vs 미선택 레시피**의 피처값 분포를 비교한 박스플롯.
-
-- 두 박스가 **많이 분리**될수록 해당 피처가 선택을 잘 구분함 ✅
-- 두 박스가 **많이 겹치면** 해당 피처만으로 선택 예측이 어려움
-
-| 박스 요소 | 의미 |
-|---|---|
-| 박스 상단/하단 | 75·25 백분위수 |
-| 중앙선 | 중위값 |
-| 수염 | 최솟값 ~ 최댓값 |""",
-    ),
     "global_coef": (
         "글로벌 LR 가중치 읽는 법",
         """\
@@ -446,43 +432,6 @@ def _render_feature_correlation(analyzer: FeatureAnalyzer) -> None:
         st.altair_chart(heat + text, use_container_width=True)
 
 
-def _render_feature_distribution(analyzer: FeatureAnalyzer) -> None:
-    """피처별 선택군 vs 미선택군 분포 박스플롯 (altair).
-
-    altair 는 Streamlit 의 transitive dep — requirements 변경 없이 사용 가능.
-    import 는 lazy (함수 안) — modules 가 streamlit 미설치 환경에서 import
-    되어도 부담 없음.
-    """
-    _chart_header("📊 피처별 선택군 vs 미선택군 분포", "feat_dist")
-    st.caption("각 피처에서 선택군과 미선택군 점수 분포가 실제로 분리되는지 시각 확인.")
-    long_df = analyzer.feature_distribution()
-    if long_df.empty:
-        st.info("기록이 쌓이면 표시됩니다.")
-        return
-
-    import altair as alt  # noqa: PLC0415 — lazy import (streamlit transitive)
-
-    chart = (
-        alt.Chart(long_df)
-        .mark_boxplot(extent="min-max")
-        .encode(
-            # X 축 라벨은 숨김 — 미선택/선택은 색(legend)으로 충분히 구분되므로
-            # 좁은 컬럼 폭에 라벨이 겹쳐 보이던 문제를 직접 해결.
-            x=alt.X("selected:N", title=None, axis=alt.Axis(labels=False, ticks=False)),
-            y=alt.Y("value:Q", title="점수"),
-            color=alt.Color("selected:N", title="선택 여부"),
-            # 피처 이름을 컬럼 위에 표시해 X 축 영역과 분리.
-            column=alt.Column(
-                "feature:N",
-                title=None,
-                header=alt.Header(labelOrient="top", labelFontSize=12, labelPadding=8),
-            ),
-        )
-        .properties(width=90, height=240)
-    )
-    st.altair_chart(chart, use_container_width=False)
-
-
 def _render_global_lr_coef(analyzer: FeatureAnalyzer) -> None:
     """전체 사용자 LR 학습 가중치 (코호트 단위 가설 가중치 검증)."""
     _chart_header("🌐 글로벌 LR 가중치 (전체 사용자 코호트)", "global_coef")
@@ -551,7 +500,5 @@ def render(
             st.info("FeatureAnalyzer 가 주입되지 않았습니다 (관리자 페이지 호출부 확인).")
         else:
             _render_feature_correlation(feature_analyzer)
-            st.divider()
-            _render_feature_distribution(feature_analyzer)
             st.divider()
             _render_global_lr_coef(feature_analyzer)

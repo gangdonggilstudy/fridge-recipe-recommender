@@ -19,10 +19,7 @@ pip install -r requirements.txt
 # 3. 레시피 DB 빌드 (최초 1회)
 python recipes/tools/build_recipes.py
 
-# 4. (선택) 시드 데이터 — ML 테스트하려면 권장
-python scripts/seed_full.py
-
-# 5. 실행
+# 4. 실행
 python run.py        # 또는: streamlit run 🍽_사용자.py
 ```
 
@@ -100,8 +97,7 @@ LLM·날씨·STT·OCR은 키가 없거나 실패해도 **앱이 죽으면 안 �
 # 스키마 초기화 단독 실행
 python -m modules.db_init
 
-# 시드로 ML 동작 확인
-python scripts/seed_full.py
+# ML 동작 확인 (앱에서 추천을 충분히 선택해 기록을 쌓은 뒤)
 python scripts/retrain.py        # 재학습 트리거
 
 # 앱 띄워 수동 확인

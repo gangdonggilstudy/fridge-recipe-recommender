@@ -64,7 +64,6 @@
 **우리 프로젝트** — 이 앱 개인화의 심장:
 - [`ml_trainer.py`](../modules/ml_trainer.py) — **`LogisticRegression`** 으로 사용자별 "선택 확률" 모델 학습/예측
 - [`scorer.py`](../modules/scorer.py) — **`cosine_similarity`** 로 선호도 점수 계산
-- [`collaborative_filter.py`](../modules/collaborative_filter.py) — 협업 필터 (현재 미연결, 보존)
 - [`feature_analyzer.py`](../modules/feature_analyzer.py) — 전역 LR로 피처 영향 분석
 
 → 어떻게 쓰이는지 자세히는 [06. ML 풀어쓰기](06_ml_explained.md)

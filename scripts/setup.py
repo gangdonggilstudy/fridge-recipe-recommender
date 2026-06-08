@@ -15,7 +15,6 @@
 옵션:
     --rebuild   recipes.db 강제 재빌드
     --no-test   테스트 스킵
-    --seed      시연 데이터까지 시딩
 """
 
 import argparse
@@ -135,16 +134,6 @@ def run_tests(py: Path) -> None:
     ok("테스트 통과")
 
 
-def seed_demo_data(py: Path) -> None:
-    section("시연 데이터 시딩")
-    script = PROJECT_ROOT / "scripts" / "seed_demo.py"
-    if not script.exists():
-        warn(f"시딩 스크립트 없음: {script}")
-        return
-    subprocess.check_call([str(py), str(script)])
-    ok("demo_A / demo_B / demo_C 시딩 완료")
-
-
 def print_next_steps(py: Path) -> None:
     print("\n" + "=" * 50)
     print("개발환경 설정 완료!")
@@ -163,14 +152,12 @@ def print_next_steps(py: Path) -> None:
 # ─── main ───
 
 def main() -> None:
-    """개발환경 부트스트랩: venv·의존성·.env·recipes.db·테스트·데모데이터 순차 설정."""
+    """개발환경 부트스트랩: venv·의존성·.env·recipes.db·테스트 순차 설정."""
     parser = argparse.ArgumentParser(description="개발환경 자동 설정")
     parser.add_argument("--rebuild", action="store_true",
                         help="recipes.db 강제 재빌드")
     parser.add_argument("--no-test", action="store_true",
                         help="단위 테스트 스킵")
-    parser.add_argument("--seed", action="store_true",
-                        help="시연 데이터 시딩까지 진행")
     args = parser.parse_args()
 
     check_python_version()
@@ -180,8 +167,6 @@ def main() -> None:
     build_recipes_db(py, force=args.rebuild)
     if not args.no_test:
         run_tests(py)
-    if args.seed:
-        seed_demo_data(py)
     print_next_steps(py)
 
 

@@ -150,7 +150,7 @@ def main() -> None:
         users = eligible_users(db_path, args.threshold)
         if not users:
             print(f"history {args.threshold}건 이상인 사용자가 없습니다. "
-                  f"(scripts/seed_demo.py --with-history 로 시연 데이터 생성 가능)")
+                  f"(앱에서 추천을 선택해 기록을 쌓으면 분석 대상이 됩니다)")
             return
         print(f"분석 대상 {len(users)}명: {', '.join(users)}")
 

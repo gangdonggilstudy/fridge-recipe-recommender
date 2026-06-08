@@ -60,27 +60,6 @@ class FeatureAnalyzer(BaseRepository):
         rename_map = dict(zip(FEATURE_COLUMNS, FEATURE_LABELS, strict=True))
         return df.rename(columns=rename_map).corr(method="pearson")
 
-    def feature_distribution(self) -> pd.DataFrame:
-        """피처별 selected=선택/미선택 분포 (altair 박스플롯용 long-format).
-
-        반환:
-            ['feature', 'selected', 'value'] 컬럼.
-            'selected' 값은 한글 라벨('선택'/'미선택') 으로 매핑되어 차트에
-            그대로 노출 가능. 데이터 없으면 빈 DataFrame.
-        """
-        df = self._load_history_df()
-        if df.empty:
-            return pd.DataFrame(columns=["feature", "selected", "value"])
-        rename_map = dict(zip(FEATURE_COLUMNS, FEATURE_LABELS, strict=True))
-        long_df = df.rename(columns=rename_map).melt(
-            id_vars="selected",
-            value_vars=list(FEATURE_LABELS),
-            var_name="feature",
-            value_name="value",
-        )
-        long_df["selected"] = long_df["selected"].map({1: "선택", 0: "미선택"})
-        return long_df
-
     def global_lr_coefficients(self) -> dict | None:
         """전체 사용자 history 로 LR 1회 학습한 coef (가설 가중치 검증).
 

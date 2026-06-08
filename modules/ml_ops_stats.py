@@ -90,24 +90,6 @@ def users_with_models(
     return pd.DataFrame(rows)
 
 
-# ACTIVATION_THRESHOLD=50 분기점. 사용자 수 무관 5 막대 표현.
-HISTORY_BINS: list[tuple[str, int, int]] = [
-    ("0",     0,   0),
-    ("1-9",   1,   9),
-    ("10-49", 10,  49),
-    ("50-99", 50,  99),
-    ("100+",  100, 10**9),
-]
-
-
-def history_size_distribution(history_repo: HistoryRepo) -> pd.DataFrame:
-    """구간별 사용자 수 (st.bar_chart 호환). 빈 결과면 빈 DataFrame."""
-    df = _user_history_counts(history_repo)
-    if df.empty:
-        return df
-    return _bin_counts(df["history_n"], HISTORY_BINS, inclusive_hi=True)
-
-
 def model_disk_stats(registry: ModelRegistry) -> dict[str, object]:
     """`models/` 디렉토리 사용자 수·파일 수·총 바이트 (KB/MB 환산은 표시 측)."""
     base_dir = registry.base_dir

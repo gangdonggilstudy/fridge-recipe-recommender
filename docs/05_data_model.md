@@ -130,7 +130,7 @@ erDiagram
 | **custom_recipes** (+ingredients) | 사용자가 직접 만든 레시피 | `CustomRecipeRepo` |
 | **recipe_likes** | 좋아요 토글 (시스템·커스텀 모두) | `LikeRepo` |
 | **user_restrictions** | 알레르기·기피 재료 (하드 필터) | `RestrictionRepo` |
-| **recipe_keyword_votes** | LLM 키워드에 대한 사용자 투표 (현재 미연결) | `KeywordVoteRepo` |
+| **recipe_keyword_votes** | LLM 키워드에 대한 사용자 투표 (현재 미연결 — repo 제거, 테이블만 유지) | — |
 
 ### history vs impressions — 헷갈리기 쉬움
 

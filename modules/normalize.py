@@ -110,13 +110,6 @@ def get_category(ingredient: str) -> str | None:
     return INGREDIENT_CATEGORIES.get(canonical)
 
 
-def same_category(a: str, b: str) -> bool:
-    """두 재료가 같은 카테고리에 속하는지. 한쪽이라도 미등록 시 False."""
-    ca = get_category(a)
-    cb = get_category(b)
-    return ca is not None and ca == cb
-
-
 # 순서 있는 카테고리 (벡터 차원 순서 보존 — preference.FEATURE_KEYS 등에서 *전개)
 STYLE_KEYS: tuple[str, ...] = ("한식", "양식", "중식", "일식")
 TASTE_KEYS: tuple[str, ...] = ("매운맛", "담백함", "단맛", "짭짤함", "고소함", "감칠맛")

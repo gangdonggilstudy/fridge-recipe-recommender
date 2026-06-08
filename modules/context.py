@@ -120,12 +120,6 @@ def temporal_fit_score(
     return 0.0
 
 
-def get_current_hour(now: datetime | None = None) -> int:
-    if now is None:
-        now = datetime.now()
-    return now.hour
-
-
 class ContextAnalyzer:
     """시간·날씨·월을 한 번에 조립하는 헬퍼."""
 

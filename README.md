@@ -9,9 +9,9 @@
 python run.py
 ```
 
-`.venv` 가 없으면 **자동으로** 가상환경 생성 → 의존성 설치 → `recipes.db` 빌드까지 한 뒤 앱을 띄웁니다 (아래 §1·§2 생략 가능). `app.db`(사용자·기록)는 첫 실행 시 새 스키마로 **자동 생성**됩니다. 데모 데이터만 따로 원하면 §4의 시드를 추가 실행하세요.
+`.venv` 가 없으면 **자동으로** 가상환경 생성 → 의존성 설치 → `recipes.db` 빌드까지 한 뒤 앱을 띄웁니다 (아래 §1·§2 생략 가능). `app.db`(사용자·기록)는 첫 실행 시 새 스키마로 **자동 생성**됩니다.
 
-> 아래 §1~§5는 단계별로 직접 제어하고 싶을 때의 **수동 설정**입니다.
+> 아래 §1~§4는 단계별로 직접 제어하고 싶을 때의 **수동 설정**입니다.
 
 ## 1. 의존성 설치
 
@@ -51,29 +51,7 @@ python recipes/tools/build_recipes.py
 
 모두 미설정이어도 추천·UI 는 동작합니다 (LLM/날씨는 fallback).
 
-## 4. (선택) 시드 데이터
-
-시연용 데모 사용자 + history 생성:
-
-```bash
-python scripts/seed_demo.py --with-history
-```
-
-전체 시드 (lots of history + likes + impressions):
-
-```bash
-python scripts/seed_full.py
-```
-
-발표·데모용 — **10명 × 약 2년치** 활동 + **개인 AI 모델까지 미리 학습**:
-
-```bash
-python scripts/seed_demo_2y.py --reset
-```
-
-`data/app.db`(사용자 demo_01~demo_10)와 `models/`(각자의 학습된 모델)를 한 번에 생성합니다. 결정적(seed 고정)이라 재실행하면 같은 데이터로 복원됩니다. `--reset` 은 app.db 를 통째로 새로 만들고(다른 데이터도 삭제), 생략하면 demo_01~10 만 갱신(나머지 보존). 앱 실행 후 사이드바에서 `demo_01`~`demo_10` 선택 → 학습된 개인화 추천을 바로 확인. 약한 미선택 신호([06](docs/06_ml_explained.md))까지 포함된 데이터입니다.
-
-## 5. 실행
+## 4. 실행
 
 원클릭:
 
@@ -89,7 +67,7 @@ streamlit run 🍽_사용자.py
 
 브라우저에서 `http://localhost:8501` 접속.
 
-## 6. 코드 업데이트 후 DB가 안 맞을 때 (기존 개발자)
+## 5. 코드 업데이트 후 DB가 안 맞을 때 (기존 개발자)
 
 > 📢 **DB 정책 (릴리스 단계)**: 이 프로젝트는 이제 **DB 마이그레이션을 운영**합니다.
 > 스키마 단일 출처는 `modules/db_init.py` 이며,
@@ -105,8 +83,6 @@ streamlit run 🍽_사용자.py
   ```bash
   # Windows
   del data\app.db data\app.db-wal data\app.db-shm
-  # 데모 데이터까지 원하면 재시드
-  python scripts/seed_full.py
   ```
   > 📌 **추가형 컬럼은 자동 마이그레이션**: 예로 `recommendation_impressions` 에 ML
   > '약한 미선택' 학습용 5피처(`ingredient_score`·`consumption_score`·`preference_score`·
@@ -129,4 +105,4 @@ streamlit run 🍽_사용자.py
 | `pages/` | 운영자 페이지 |
 | `recipes/` | 레시피 카탈로그 빌드 |
 | `research` / `recipe_project`| 만개의 레시피 크롤링 및 분석 |
-| `scripts/` | 시드·재학습 등 보조 스크립트 |
+| `scripts/` | 재학습 등 보조 스크립트 |

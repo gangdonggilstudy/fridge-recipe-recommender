@@ -43,19 +43,6 @@ class MetricsCalculator(BaseRepository):
             row = con.execute(sql, params).fetchone()
         return int(row[0]) if row else 0
 
-    @staticmethod
-    def _finalize_ctr_df(df: pd.DataFrame, *, round_ctr: bool = True) -> pd.DataFrame:
-        """selected fillna(0)+int 캐스팅 + ctr 컬럼 계산.
-
-        `round_ctr=False` 는 daily_metrics(시계열 차트 정밀도 보존) 전용.
-        """
-        if df.empty:
-            return df
-        df["selected"] = df["selected"].fillna(0).astype(int)
-        ctr = df["selected"] / df["shown"]
-        df["ctr"] = ctr.round(3) if round_ctr else ctr
-        return df
-
     # ── 전체 ──
 
     def total_recommendations(self) -> int:
@@ -65,10 +52,6 @@ class MetricsCalculator(BaseRepository):
         return self._safe_count(
             f"SELECT COUNT(*) FROM {_IMPRESSIONS} WHERE selected = 1",
         )
-
-    def overall_ctr(self) -> float:
-        shown = self.total_recommendations()
-        return self.total_selections() / shown if shown > 0 else 0.0
 
     # ── 세션 단위 전환율 ──
     # CTR(카드 1장당)과 달리, '추천 한 번(세션)에 1개 이상 선택했나'를 본다.
@@ -110,29 +93,6 @@ class MetricsCalculator(BaseRepository):
         df["converted"] = df["converted"].fillna(0).astype(int)
         df["rate"] = df["converted"] / df["sessions"]
         return df
-
-    # ── 시계열 ──
-
-    def daily_metrics(self, days_back: int = 30) -> pd.DataFrame:
-        """일별 노출 / 선택 / 선택률.
-
-        반환: columns=[date, shown, selected, ctr]
-        """
-        start_date = (date.today() - timedelta(days=days_back)).isoformat()
-        with self._connect() as con:
-            df = pd.read_sql(
-                f"""SELECT date(timestamp) AS date,
-                          COUNT(*) AS shown,
-                          SUM(selected) AS selected
-                   FROM {_IMPRESSIONS}
-                   WHERE date(timestamp) >= ?
-                   GROUP BY date(timestamp)
-                   ORDER BY date""",
-                con,
-                params=[start_date],
-            )
-        # 차트 정밀도 보존 — 라인 차트가 비반올림 값을 그대로 렌더
-        return self._finalize_ctr_df(df, round_ctr=False)
 
     # ── 집계 ──
 

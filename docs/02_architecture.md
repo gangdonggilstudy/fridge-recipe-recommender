@@ -55,7 +55,7 @@ flowchart TD
 | `llm/` | AI 텍스트 생성 (설명·재료 추출) | `narrator.py` |
 | `pages/` | 운영자 전용 페이지 | `1_🛡_관리자.py` |
 | `recipes/` | 레시피 카탈로그 빌드 (CSV→DB) | `build_recipes.py` |
-| `scripts/` | 시드·재학습 등 보조 도구 | `seed_demo.py` |
+| `scripts/` | 재학습 등 보조 도구 | `retrain.py` |
 
 ## 핵심 개념: app_services는 "조립 공장"
 

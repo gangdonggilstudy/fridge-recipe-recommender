@@ -7,7 +7,6 @@
 명령:
     run       — Streamlit 앱 실행
     test      — pytest 전체 실행
-    seed      — 시연 데이터 시딩
     rebuild   — recipes.db 재빌드
     lint      — ruff check
     format    — ruff format
@@ -47,7 +46,6 @@ def run(*cmd: str) -> int:
 COMMANDS = {
     "run":     ("-m", "streamlit", "run", "🍽_사용자.py"),
     "test":    ("-m", "pytest", "tests", "-v"),
-    "seed":    ("scripts/seed_demo.py",),
     "rebuild": ("recipes/tools/build_recipes.py",),
     "lint":    ("-m", "ruff", "check", "."),
     "format":  ("-m", "ruff", "format", "."),
@@ -56,7 +54,7 @@ COMMANDS = {
 
 
 def main() -> None:
-    """CLI 디스패처: `python scripts/dev.py <run|test|seed|rebuild|lint|format|pdf>`."""
+    """CLI 디스패처: `python scripts/dev.py <run|test|rebuild|lint|format|pdf>`."""
     if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:
         print(__doc__)
         sys.exit(1)

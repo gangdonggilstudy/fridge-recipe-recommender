@@ -34,7 +34,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from modules.normalize import normalize_ingredient  # noqa: E402
 
 
-STYLE_ALLOWED = {"한식", "양식", "중식", "일식"}
 DIFFICULTY_ALLOWED = {"쉬움", "보통", "어려움"}
 SEASON_ALLOWED = {"봄", "여름", "가을", "겨울"}
 

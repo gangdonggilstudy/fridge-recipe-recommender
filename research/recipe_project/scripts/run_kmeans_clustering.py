@@ -9,7 +9,6 @@ from sklearn.preprocessing import StandardScaler
 
 from db.repository import (
     find_recipes_for_clustering,
-    find_all_recipe_ingredients,
     find_main_recipe_ingredients_for_clustering,
     clear_recipe_cluster_result,
     upsert_recipe_cluster_result,
