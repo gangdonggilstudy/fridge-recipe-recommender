@@ -7,6 +7,7 @@
   (천장 1.0). 모니터링 헤드라인·추이는 이쪽 — 사용자 직관에 더 가깝다.
 """
 
+import math
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -26,6 +27,21 @@ _DIMENSION_ORDER: dict[str, list[str]] = {
     "weather": _WEATHER_ORDER,
     "time":    _TIME_ORDER,
 }
+
+
+def _wilson_lower(k: int, n: int, z: float = 1.96) -> float:
+    """Wilson score 구간의 하한(95%). 소표본 고CTR을 보수적으로 강등.
+
+    예: 1/1→≈0.21, 5/5→≈0.57, 20/25→≈0.61. raw CTR(1/1=100%) 정렬이
+    소표본 레시피를 과대노출하는 문제를 표본수 반영으로 보정한다.
+    """
+    if n <= 0:
+        return 0.0
+    phat = k / n
+    denom = 1.0 + z * z / n
+    centre = phat + z * z / (2 * n)
+    margin = z * math.sqrt((phat * (1 - phat) + z * z / (4 * n)) / n)
+    return (centre - margin) / denom
 
 
 class MetricsCalculator(BaseRepository):
@@ -151,6 +167,11 @@ class MetricsCalculator(BaseRepository):
 
         agg["selected"] = agg["selected"].fillna(0).astype(int)
         agg["ctr"] = agg["selected"] / agg["shown"]
+        # 표본 보정: Wilson 하한으로 정렬해 소표본 100%(1/1) 과대노출 방지.
+        agg["wilson"] = [
+            _wilson_lower(int(k), int(s))
+            for k, s in zip(agg["selected"], agg["shown"], strict=True)
+        ]
 
         # 2) 레시피 이름 매핑 (시스템 레시피만 — 커스텀은 ID 유지)
         recipes_path = Path(recipes_db_path)
@@ -170,10 +191,10 @@ class MetricsCalculator(BaseRepository):
             group = agg[agg["dim"] == dim_val]
             if group.empty:
                 continue
-            top = group.nlargest(top_n, "ctr")
+            top = group.nlargest(top_n, "wilson")
             row: dict = {"구간": dim_val}
             for i, (_, r) in enumerate(top.iterrows(), start=1):
-                row[f"{i}위"] = f"{r['name']} ({r['ctr']:.1%})"
+                row[f"{i}위"] = f"{r['name']} ({r['ctr']:.0%}, n={int(r['shown'])})"
             row["노출 수"] = int(group["shown"].sum())
             rows.append(row)
         return pd.DataFrame(rows)

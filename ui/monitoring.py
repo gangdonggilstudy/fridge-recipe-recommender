@@ -178,7 +178,8 @@ def _render_top_by_context(metrics: MetricsCalculator) -> None:
     st.subheader("🌡 상황별 인기 레시피")
     st.caption(
         "월·날씨·시간대 각 카테고리에서 어떤 레시피가 가장 잘 선택됐는지 top 3. "
-        "선택률 = selected ÷ shown (그 카테고리 안 노출 기준)."
+        "표본 보정(Wilson 하한)으로 정렬해 소표본 100%(1회 노출/선택) 과대노출을 방지. "
+        "표시 = 이름 (선택률, n=노출수)."
     )
     label_to_dim = {"월": "month", "날씨": "weather", "시간대": "time"}
     choice = st.radio(
@@ -382,7 +383,9 @@ def _render_feature_correlation(analyzer: FeatureAnalyzer) -> None:
     _chart_header("🔬 피처 × 선택 Pearson 상관계수", "feat_corr")
     st.caption(
         "각 피처가 사용자 선택과 얼마나 상관 있는지. "
-        "값이 1 에 가까울수록 강한 양의 상관, -1 에 가까우면 음의 상관."
+        "값이 1 에 가까울수록 강한 양의 상관, -1 에 가까우면 음의 상관. "
+        "⚠ **명시 신호(history: 선택/별로에요)만 기준** — 노출 후 미선택(약한 신호)은 "
+        "ML 학습에만 쓰이고 여기엔 제외. 명시 거부가 적으면 상관이 0 근처일 수 있음(정상)."
     )
     corr = analyzer.feature_correlation()
     if corr.empty:
@@ -437,7 +440,8 @@ def _render_global_lr_coef(analyzer: FeatureAnalyzer) -> None:
     _chart_header("🌐 글로벌 LR 가중치 (전체 사용자 코호트)", "global_coef")
     st.caption(
         "전체 사용자 history 를 합쳐 학습한 Logistic Regression 의 피처 가중치. "
-        "개인 모델(블렌더)과 달리 코호트 단위 — 가설 가중치 검증·다음 피처 결정 근거."
+        "개인 모델(블렌더)과 달리 코호트 단위 — 가설 가중치 검증·다음 피처 결정 근거. "
+        "⚠ **명시 신호(history)만** 학습 — 약한 미선택은 제외(개인 ML 블렌더와 데이터 기준이 다름)."
     )
     result = analyzer.global_lr_coefficients()
     if result is None:
