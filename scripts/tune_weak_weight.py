@@ -226,7 +226,8 @@ def main() -> None:
         best_v = avg[best_w]
         # 평가 hit@1 표준오차 ≈ sqrt(p(1-p)/N)/sqrt(노이즈수). N=평가세션.
         se = (0.25 / N_TEST_SESSIONS / len(NOISE_LEVELS)) ** 0.5
-        tied = sorted(w for w, v in avg.items() if best_v - v <= se)
+        # 0 은 퇴화(무작위 이하)라 동등 구간에서 제외 — '0보다 커야 함' 서술과 일치.
+        tied = sorted(w for w, v in avg.items() if w > 0 and best_v - v <= se)
         print(f"\n[결론] 0보다 큰 모든 가중치가 룰(+{best_v - rule_avg:.2f})을 상회.")
         print(f"  통계적 동등 구간(±1SE≈{se:.3f}): {tied}  ← 사실상 구분 불가")
         print("  중간 노이즈(가장 현실적)에선 낮은 값이 우세 + 미클릭 과신 방지")

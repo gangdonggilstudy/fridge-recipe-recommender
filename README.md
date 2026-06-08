@@ -65,6 +65,14 @@ python scripts/seed_demo.py --with-history
 python scripts/seed_full.py
 ```
 
+발표·데모용 — **10명 × 약 2년치** 활동 + **개인 AI 모델까지 미리 학습**:
+
+```bash
+python scripts/seed_demo_2y.py --reset
+```
+
+`data/app.db`(사용자 demo_01~demo_10)와 `models/`(각자의 학습된 모델)를 한 번에 생성합니다. 결정적(seed 고정)이라 재실행하면 같은 데이터로 복원됩니다. `--reset` 은 app.db 를 통째로 새로 만들고(다른 데이터도 삭제), 생략하면 demo_01~10 만 갱신(나머지 보존). 앱 실행 후 사이드바에서 `demo_01`~`demo_10` 선택 → 학습된 개인화 추천을 바로 확인. 약한 미선택 신호([06](docs/06_ml_explained.md))까지 포함된 데이터입니다.
+
 ## 5. 실행
 
 원클릭:

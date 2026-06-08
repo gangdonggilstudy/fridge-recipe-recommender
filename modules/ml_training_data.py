@@ -1,4 +1,9 @@
-"""history → (X, y). 피처 차원·순서는 `ml_model.build_feature` 와 단일 출처."""
+"""ML 학습 데이터 로더. 피처 차원·순서는 `ml_model.build_feature` 와 단일 출처.
+
+`load`: history(명시 선택/거부)만 → (X, y).
+`load_with_weak`: history + recommendation_impressions 의 약한 미선택(acted=0)을
+합쳐 → (X, y, is_weak). 후자가 기본 학습 경로(블렌더 활성화).
+"""
 from __future__ import annotations
 
 from pathlib import Path

@@ -47,7 +47,7 @@ python run.py        # 또는: streamlit run 🍽_사용자.py
 | 선호 벡터 차원 | `modules/preference.py` `FEATURE_KEYS` |
 | 맛 추론 마커 | `modules/normalize.py` `TASTE_MARKERS` |
 
-> ⚠️ 예: ML 피처를 바꿀 땐 `FEATURES` 튜플(라벨·순서·차원의 단일 출처)과 **함께** `build_feature`·history INSERT·`row_to_feature`/SELECT·`db_init` 스키마를 **같은 순서로 맞춰** 고쳐야 합니다(이들은 같은 컬럼명을 리터럴로 참조). 한쪽만 바꾸면 train/predict 스큐가 생깁니다.
+> ⚠️ 예: ML 피처를 바꿀 땐 `FEATURES` 튜플(라벨·순서·차원의 단일 출처)과 **함께** `build_feature`·history INSERT·`row_to_feature`/SELECT·`db_init` 스키마를 **같은 순서로 맞춰** 고쳐야 합니다(이들은 같은 컬럼명을 리터럴로 참조). **약한 미선택 학습**도 같은 5피처를 쓰므로 `recommendation_impressions` 스키마 컬럼 + `RecommendationImpressionRepo.log_view`(노출 시 피처 기록) + `TrainingDataRepository.load_with_weak`(SELECT) 도 함께 맞춰야 합니다. 한쪽만 바꾸면 train/predict 스큐가 생깁니다.
 
 ### 2. 모든 외부 의존성에 fallback
 LLM·날씨·STT·OCR은 키가 없거나 실패해도 **앱이 죽으면 안 됩니다.** 새 외부 호출을 추가하면 `try/except` + 대체 경로를 반드시 넣으세요.
@@ -71,7 +71,7 @@ LLM·날씨·STT·OCR은 키가 없거나 실패해도 **앱이 죽으면 안 �
 1. `modules/ingredient_matcher.py` 등에 순수 함수로 점수 계산 추가
 2. `modules/scorer.py` `Scorer.score()`의 `components`에 항목 추가
 3. `DEFAULT_WEIGHTS`에 가중치 추가
-4. ML에도 넣으려면 `ml_model.FEATURES` + history 스키마 컬럼 추가
+4. ML에도 넣으려면 `ml_model.FEATURES` + history 스키마 컬럼 + `recommendation_impressions` 컬럼(약한 미선택용)·`log_view`·`load_with_weak` 까지 함께 추가 (위 §1 ⚠️ 참고)
 
 ### LLM provider 바꾸기/추가하기
 1. `llm/narrator.py`의 `LLMProvider` Protocol을 구현

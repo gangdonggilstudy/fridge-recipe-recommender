@@ -93,7 +93,7 @@ AI가 "왜 이 추천?"을 숫자로 정확히 분해해 보여주는 것. LR의
 '별로에요'를 누르면 직전 선택을 **정확히 되돌립니다**: impression·history·선호벡터 3곳을 일관되게 원복(−1.5). → `Recommender.record_dislike()`
 
 ### impression (노출 기록)
-추천 카드가 화면에 **보여진** 기록. 이걸 클릭(선택)과 비교해 **CTR(클릭률)** 을 계산합니다. → `recommendation_impression.py`
+추천 카드가 화면에 **보여진** 기록. 이걸 클릭(선택)과 비교해 **CTR(클릭률)** 을 계산합니다. 또한 보여줬는데 **안 고른** 노출은 ML 의 **약한 미선택**(약한 '아니오') 학습 신호로도 쓰입니다([06](06_ml_explained.md#선택만-하면-ai가-영영-못-배운다--약한-미선택-신호)). → `recommendation_impression.py`
 
 ### 하드 필터 (hard filter)
 점수와 무관하게 **무조건 제외**. 알레르기·기피 재료가 든 레시피는 점수 계산 전에 빼버립니다(타협 불가). → `Recommender._apply_restrictions()`

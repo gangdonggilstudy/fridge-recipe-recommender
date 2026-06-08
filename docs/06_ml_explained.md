@@ -40,7 +40,7 @@ flowchart LR
 
 ## 5개의 입력 (피처)
 
-코드: [`ml_model.FEATURES`](../modules/ml_model.py#L22)
+코드: [`ml_model.FEATURES`](../modules/ml_model.py#L32)
 
 | # | 피처 | 의미 |
 |---|---|---|
@@ -61,7 +61,7 @@ flowchart LR
 
 ## "학습한다"는 게 정확히 뭔가?
 
-코드: [`MLTrainer.train()`](../modules/ml_trainer.py#L32)
+코드: [`MLTrainer.train()`](../modules/ml_trainer.py#L37)
 
 1. 이 사용자의 과거 기록을 모두 읽음 → `(X, y)`
    - **명시 신호**(`history`): `X`=5개 피처, `y`=선택(1)/거부(0)
@@ -88,7 +88,7 @@ model.fit(X, y, sample_weight=...)     # 최신성 가중 학습
 
 ## 언제 학습하나? (활성화 & 재학습)
 
-코드: [`MLModel.maybe_train()`](../modules/ml_model.py#L82)
+코드: [`MLModel.maybe_train()`](../modules/ml_model.py#L94)
 
 | 조건 | 동작 |
 |---|---|
@@ -103,7 +103,7 @@ model.fit(X, y, sample_weight=...)     # 최신성 가중 학습
 
 ## "선택만 하면" AI가 영영 못 배운다? — 약한 미선택 신호
 
-코드: [`MLTrainer`](../modules/ml_trainer.py#L32) · [`load_with_weak`](../modules/ml_training_data.py#L40) · [`WEAK_NEGATIVE_WEIGHT`](../modules/ml_model.py#L19)
+코드: [`MLTrainer`](../modules/ml_trainer.py#L37) · [`load_with_weak`](../modules/ml_training_data.py#L55) · [`WEAK_NEGATIVE_WEIGHT`](../modules/ml_model.py#L28)
 
 > 🍳 **비유**: 요리 심사위원에게 **합격시킨 요리만** 잔뜩 보여주고 **탈락시킨 요리는 한 번도** 안 보여주면, 그 위원은 "합격과 탈락을 가르는 기준"을 못 배웁니다. 둘 다 있어야 경계선을 그을 수 있죠.
 
@@ -271,7 +271,7 @@ models/<user_id>/
                     └─ 재료 기여 ─┘   └─ 소모 기여 ─┘
 ```
 
-코드: [`MLTrainer.linear_contributions()`](../modules/ml_trainer.py#L80)는 이 **기여도 하나하나를 그대로 반환**합니다. 그래서:
+코드: [`MLTrainer.linear_contributions()`](../modules/ml_trainer.py#L107)는 이 **기여도 하나하나를 그대로 반환**합니다. 그래서:
 
 - 사용자에게 *"유통기한 임박 재료를 활용할 수 있어요"* (가장 큰 기여)를 보여줄 수 있고
 - **충실성 불변식**: `절편 + 기여도 합 = 모델의 실제 계산값` 이 정확히 성립 → 설명이 거짓말이 아님
