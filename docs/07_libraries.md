@@ -131,7 +131,7 @@
 scikit-learn이 함께 설치. [`model_registry.py`](../modules/model_registry.py)에서 **학습된 모델을 `.pkl` 파일로 저장/로드**할 때 사용.
 
 ### altair
-streamlit이 함께 설치. [`ui/monitoring.py`](../ui/monitoring.py), [`feature_analyzer.py`](../modules/feature_analyzer.py)에서 운영자 대시보드 **차트**(박스플롯·히트맵) 그릴 때 사용.
+streamlit이 함께 설치. [`ui/monitoring.py`](../ui/monitoring.py) 피처 분석 탭에서 상관계수 **히트맵**을 그릴 때 사용.
 
 ### Pillow (PIL)
 **선택적 best-effort**. [`ui/receipt_input.py`](../ui/receipt_input.py)에서 **영수증 사진을 OCR 전에 축소**(API 비용·속도 절감). 미설치면 원본 그대로 전송 (graceful).
