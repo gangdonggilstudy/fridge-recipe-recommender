@@ -125,7 +125,7 @@ erDiagram
 | **users** | 사용자 기본 정보 + 동의 + 인구통계 + 위치 | `DemographicsRepo`, `LocationRepo`, `db_init` |
 | **preference_vectors** | 사용자 취향을 숫자로 (한식 1.2, 매운맛 0.8...) | `PreferenceManager` |
 | **history** | 추천을 **선택/거부한 기록** + 그때의 5점수 → **ML 학습 데이터** | `HistoryRepo` |
-| **recommendation_impressions** | 추천 카드가 **보여진** 기록 → CTR(클릭률) 계산 | `RecommendationImpressionRepo` |
+| **recommendation_impressions** | 추천 카드가 **보여진** 기록 → CTR 계산 + 안 고른 노출(acted=0)을 ML **약한 미선택** 신호로도 사용(5피처 함께 저장) | `RecommendationImpressionRepo` |
 | **fridge** | 보유 재료 + 유통기한 | `FridgeRepo` |
 | **custom_recipes** (+ingredients) | 사용자가 직접 만든 레시피 | `CustomRecipeRepo` |
 | **recipe_likes** | 좋아요 토글 (시스템·커스텀 모두) | `LikeRepo` |
@@ -136,7 +136,8 @@ erDiagram
 
 - **impressions** = "추천이 화면에 **떴다**" (노출). 떠도 안 누를 수 있음.
 - **history** = "사용자가 **선택했다/거부했다**" + 그때의 점수 스냅샷.
-- 둘을 비교하면 **CTR = 선택 / 노출** 이 나옵니다. 그리고 history는 ML 학습의 원천입니다.
+- 둘을 비교하면 **CTR = 선택 / 노출** 이 나옵니다.
+- **ML 학습 데이터**: history(명시적 선택/거부) + impressions의 **안 고른 노출(약한 미선택)**. history는 "강한 신호", 약한 미선택은 신뢰도 0.2의 "약한 신호". → [06. ML](06_ml_explained.md#선택만-하면-ai가-영영-못-배운다--약한-미선택-신호)
 
 ---
 
@@ -150,7 +151,7 @@ temporal_fit                                                          ← 시기
 + selected (0/1)                                                       ← 정답 라벨
 ```
 
-나중에 `TrainingDataRepository`가 이 행들을 `(X, y)`로 읽어 로지스틱 회귀를 학습합니다. → 자세히는 [06_ml_explained.md](06_ml_explained.md)
+나중에 `TrainingDataRepository`가 이 행들을 `(X, y)`로 읽어 로지스틱 회귀를 학습합니다. 여기에 더해 **`impressions`의 안 고른 노출(약한 미선택, 신뢰도 0.2)** 도 음성 표본으로 합쳐 씁니다 — `history`만으로는 "선택(1)"만 쌓여 학습이 안 되는 문제를 보완. → 자세히는 [06_ml_explained.md](06_ml_explained.md#선택만-하면-ai가-영영-못-배운다--약한-미선택-신호)
 
 > 💡 **단일 출처 주의**: `temporal_fit`은 저장할 때와 ML이 예측할 때 **같은 함수**(`context.temporal_fit_score`)로 계산합니다. 그래야 학습과 예측의 피처가 어긋나지 않습니다. (월·계절은 포함관계라 0/0.5/1 한 서수로 통합 — [06_ml_explained.md](06_ml_explained.md) 참고)
 

@@ -60,6 +60,14 @@ CREATE TABLE IF NOT EXISTS recommendation_impressions (
     hour        INTEGER,
     weather     TEXT,
     month       TEXT,
+    -- 블렌더 학습 피처(노출 시점 스냅샷). 약한 미선택(acted=0) 행을 학습 음성으로
+    -- 쓰기 위해 history 와 동일한 5피처를 여기에도 보존. history 는 명시적 선택만,
+    -- 이 컬럼들은 '노출됐으나 안 고른' 약한 음성 신호의 X 를 공급한다.
+    ingredient_score  REAL,
+    consumption_score REAL,
+    preference_score  REAL,
+    context_score     REAL,
+    temporal_fit      REAL,
     timestamp   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (session_id, recipe_id)
 );
@@ -132,7 +140,36 @@ CREATE INDEX IF NOT EXISTS idx_history_user
     ON history(user_id);
 CREATE INDEX IF NOT EXISTS idx_impressions_user
     ON recommendation_impressions(user_id);
+-- 약한 미선택 학습 쿼리(user_id + acted=0) 가속. 재학습마다 사용자 노출을 훑음.
+CREATE INDEX IF NOT EXISTS idx_impressions_weak
+    ON recommendation_impressions(user_id, acted);
 """
+
+
+# 추가형(ADD COLUMN) 자동 마이그레이션 원장.
+# SQLite 는 ADD COLUMN 만 안전(드롭·리네임·타입변경 불가)하므로 '컬럼 추가' 변경만
+# 여기 등록하면 init_db 가 기존 DB 에 누락 컬럼을 자동 보강한다. SCHEMA_SQL 과 함께
+# 갱신할 것 — 신규 DB 는 SCHEMA_SQL 이, 기존 DB 는 이 원장이 같은 컬럼을 채운다.
+_ADDITIVE_COLUMNS: dict[str, tuple[tuple[str, str], ...]] = {
+    "recommendation_impressions": (
+        ("ingredient_score", "REAL"),
+        ("consumption_score", "REAL"),
+        ("preference_score", "REAL"),
+        ("context_score", "REAL"),
+        ("temporal_fit", "REAL"),
+    ),
+}
+
+
+def _reconcile_columns(con: sqlite3.Connection) -> None:
+    """기존 테이블에 누락된 추가형 컬럼을 ALTER 로 보강(멱등). 구조적 변경은 미지원."""
+    for table, columns in _ADDITIVE_COLUMNS.items():
+        existing = {row[1] for row in con.execute(f"PRAGMA table_info({table})")}
+        if not existing:
+            continue  # 테이블 자체가 없으면 위 CREATE TABLE 이 새 스키마로 만듦
+        for name, decl_type in columns:
+            if name not in existing:
+                con.execute(f"ALTER TABLE {table} ADD COLUMN {name} {decl_type}")
 
 
 @contextmanager
@@ -153,8 +190,11 @@ def _connect(path: str | Path) -> Iterator[sqlite3.Connection]:
 def init_db(db_path: str | Path | None = None) -> Path:
     """app.db 생성 및 스키마 적용. 멱등.
 
-    SCHEMA_SQL 은 모든 컬럼을 정의하는 단일 출처 — 본 프로젝트는 릴리스 전이라
-    DB 마이그레이션을 별도로 운영하지 않는다. 스키마 변경 시 SCHEMA_SQL 만 갱신.
+    SCHEMA_SQL 은 모든 컬럼을 정의하는 단일 출처. 신규 DB 는 여기서 완성된다.
+    기존 DB 의 **컬럼 추가**(additive)는 `_reconcile_columns` 가 매 기동 시 자동
+    보강한다(`_ADDITIVE_COLUMNS` 원장 기반) — 별도 수동 마이그레이션 불필요.
+    단, 드롭·리네임·타입변경 같은 **구조적 변경**은 자동화하지 않으므로 그때는
+    app.db 재생성이 필요하다(README §6).
     """
     from .db_paths import get_app_db_path  # 순환 import 회피 — _base_repo→db_init→db_paths
     path = Path(db_path) if db_path is not None else Path(get_app_db_path())
@@ -166,6 +206,8 @@ def init_db(db_path: str | Path | None = None) -> Path:
         # 출처(init_db)에서 한 번만 단언. 멱등. executescript 보다 먼저 실행.
         con.execute("PRAGMA journal_mode=WAL")
         con.executescript(SCHEMA_SQL)
+        # 기존 DB 누락 컬럼 자동 보강(추가형 마이그레이션). 신규 DB 는 no-op.
+        _reconcile_columns(con)
         con.commit()
     return path
 

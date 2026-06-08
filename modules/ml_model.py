@@ -16,6 +16,16 @@ RETRAIN_INTERVAL = 25
 LR_MAX_ITER = 1000
 # L2 강도 — 소표본 + 5차원에서 과적합 억제와 신호 보존의 균형.
 LR_C = 1.0
+# ┌─ AI 가 "사용자가 보고도 안 고른 추천"을 얼마나 신경 쓸지 정하는 값 ─┐
+# │  키우면(예 0.3): 더 적극적으로 개인화 (단, 노이즈 과신 위험↑)        │
+# │  줄이면(예 0.1): 더 얌전하게 (룰 추천에 가까워짐)                     │
+# │  None:          이 기능 끔 — 옛날처럼 '별로에요' 없으면 학습 안 됨     │
+# │  권장 0.1~0.3. 바꾸는 법: docs/06_ml_explained.md '가중치를 조정하는 법'│
+# └──────────────────────────────────────────────────────────────────┘
+# (왜 1.0 이 아니라 0.2? '안 고름'은 '싫음'이 아닐 수 있어 명시 신호 1.0 보다 낮게 둠.
+#  scripts/tune_weak_weight.py 실험: 0.05~1.0 모두 룰을 +0.20 상회하며 통계적으로
+#  동등 → 중간 노이즈에 강건하고 과신 않는 보수값 0.2 채택. 0 은 퇴화라 금지.)
+WEAK_NEGATIVE_WEIGHT: float | None = 0.2
 
 # (history DB 컬럼, 한글 라벨) 페어 단일 출처 — 순서 어긋남을 컴파일타임에 차단.
 # 구 month_match·season_match 두 0/1 은 포함관계라 공선 중복 → temporal_fit 서수로 통합.
@@ -59,6 +69,7 @@ class MLModel:
         db_path: str | Path | None = None,
         threshold: int = ACTIVATION_THRESHOLD,
         registry: ModelRegistry | None = None,
+        weak_weight: float | None = WEAK_NEGATIVE_WEIGHT,
     ):
         self.db_path = Path(db_path) if db_path is not None else get_app_db_path()
         self.threshold = threshold
@@ -69,6 +80,7 @@ class MLModel:
         self.trainer = MLTrainer(
             self.data_repo, self.store, FEATURE_LABELS,
             lr_c=LR_C, lr_max_iter=LR_MAX_ITER,
+            weak_weight=weak_weight,
         )
 
     def is_ready(self, user_id: str) -> bool:

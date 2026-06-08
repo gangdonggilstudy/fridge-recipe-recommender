@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from ._base_repo import BaseRepository
+from .context import temporal_fit_score
 from .db_init import ensure_user
 
 
@@ -31,6 +32,12 @@ class RecommendationImpressionRepo(BaseRepository):
         rows = []
         for rank, recipe in enumerate(recipes, start=1):
             scores = recipe.get("scores", {})
+            # 5피처를 노출 시점에 스냅샷 — 안 고른(acted=0) 행을 나중에 약한 음성
+            # 학습 데이터로 쓰기 위함. temporal_fit 은 history 와 동일한 단일 출처
+            # 함수로 계산해 train/serve skew 를 막는다.
+            temporal_fit = temporal_fit_score(
+                context.get("month"), recipe.get("suitable_month") or [],
+            )
             rows.append(
                 (
                     session_id,
@@ -44,6 +51,11 @@ class RecommendationImpressionRepo(BaseRepository):
                     context.get("hour"),
                     context.get("weather"),
                     context.get("month"),
+                    scores.get("ingredient", 0.0),
+                    scores.get("consumption", 0.0),
+                    scores.get("preference", 0.0),
+                    scores.get("context", 0.0),
+                    temporal_fit,
                 )
             )
 
@@ -51,8 +63,10 @@ class RecommendationImpressionRepo(BaseRepository):
             con.executemany(
                 """INSERT OR IGNORE INTO recommendation_impressions
                    (session_id, user_id, recipe_id, rec_rank, selected, acted,
-                    model_group, total_score, hour, weather, month)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    model_group, total_score, hour, weather, month,
+                    ingredient_score, consumption_score, preference_score,
+                    context_score, temporal_fit)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 rows,
             )
             con.commit()

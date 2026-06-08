@@ -83,15 +83,28 @@ streamlit run 🍽_사용자.py
 
 ## 6. 코드 업데이트 후 DB가 안 맞을 때 (기존 개발자)
 
-이 프로젝트는 **DB 마이그레이션을 운영하지 않습니다** — 스키마는 `modules/db_init.py` 단일 출처이고 `CREATE TABLE IF NOT EXISTS` 라, history/app.db **스키마가 바뀐 변경을 pull** 하면 기존 `data/app.db` 는 옛 컬럼 그대로라 `no such column ...` 같은 충돌이 날 수 있습니다 (예: ML 피처 변경으로 `month_match`/`season_match` → `temporal_fit`).
+> 📢 **DB 정책 (릴리스 단계)**: 이 프로젝트는 이제 **DB 마이그레이션을 운영**합니다.
+> 스키마 단일 출처는 `modules/db_init.py` 이며,
+> - **추가형 변경(컬럼 추가)** — `init_db` 가 매 기동 시 **자동 보강**(`_reconcile_columns`,
+>   `_ADDITIVE_COLUMNS` 원장). 그냥 pull 후 실행하면 데이터 보존한 채 반영됩니다.
+> - **구조적 변경(드롭·리네임·타입변경)** — SQLite 제약상 자동화 불가. 해당 변경을 내는
+>   PR 은 **명시적 마이그레이션 스크립트**(`scripts/migrate_*.py`)를 함께 제공하는 것을
+>   원칙으로 합니다. "app.db 삭제"는 마이그레이션이 없을 때의 **최후 수단**입니다.
 
-- **app.db (사용자·기록)** — 삭제 후 재생성. 앱을 다시 실행하면 새 스키마로 자동 생성됩니다.
+구조적 변경을 pull 했는데 마이그레이션 스크립트가 없다면 기존 `data/app.db` 가 옛 구조 그대로라 `no such column ...` 같은 충돌이 날 수 있습니다 (예: ML 피처 변경으로 `month_match`/`season_match` → `temporal_fit`). 그때는 아래로 재생성하세요.
+
+- **app.db (사용자·기록)** — (마이그레이션 없는 구조적 변경 시 최후 수단) 삭제 후 재생성. 앱을 다시 실행하면 새 스키마로 자동 생성됩니다.
   ```bash
   # Windows
   del data\app.db data\app.db-wal data\app.db-shm
   # 데모 데이터까지 원하면 재시드
   python scripts/seed_full.py
   ```
+  > 📌 **추가형 컬럼은 자동 마이그레이션**: 예로 `recommendation_impressions` 에 ML
+  > '약한 미선택' 학습용 5피처(`ingredient_score`·`consumption_score`·`preference_score`·
+  > `context_score`·`temporal_fit`)가 추가됐는데, **앱을 다시 실행하면 `init_db` 가
+  > 누락 컬럼만 ALTER 로 자동 보강**합니다(데이터 보존, 옛 노출 행은 피처 NULL →
+  > 학습에서 자동 제외). 앱 없이 수동 적용만 하려면: `python scripts/migrate_impression_features.py`
 - **학습 모델 (`models/`)** — 피처 차원이 바뀌어도 옛 모델은 `feature_dim` 가드로 **자동 무효화·재학습**되어 보통 손댈 필요 없음. 깔끔히 비우려면 `models/` 폴더 삭제.
 - **recipes.db (레시피 카탈로그)** — CSV·빌드 로직이 바뀌었으면 재빌드: `python recipes/tools/build_recipes.py` (또는 `python scripts/setup.py --rebuild`).
 
