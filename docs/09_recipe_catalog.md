@@ -71,7 +71,7 @@ flowchart TD
 |---|---|---|
 | `recipes` | 레시피 본체 | id, name, style, taste, cook_time, difficulty, suitable_time/weather/**month** |
 | `recipe_ingredients` | 레시피-재료 (1:N) | recipe_id, ingredient (PK 묶음) |
-| `meta` | 카탈로그 메타 | version, updated_at, recipe_count |
+| `meta` | 카탈로그 메타 (key/value 테이블) | key, value — rows: version·updated_at·recipe_count |
 
 `suitable_month`는 `"1월,9월"` 같은 콤마 문자열로 저장됩니다([build_recipes.py:174](../recipes/tools/build_recipes.py#L174)). 이게 나중에 추천 시 [`temporal_fit_score`](../modules/context.py)로 "지금이 이 레시피에 얼마나 제철인가(0/0.5/1)" 판정의 입력이 됩니다.
 
@@ -79,9 +79,9 @@ flowchart TD
 
 ## 레시피를 추가하려면? (How-to)
 
-1. [`recipes/recipes_source.csv`](../recipes/recipes_source.csv)에 행 추가 (name, style, ingredients, taste, cook_time, difficulty, suitable_time, suitable_weather, suitable_season)
+1. [`recipes/recipes_source.csv`](../recipes/recipes_source.csv)에 행 추가 (name, style, ingredients, cook_time, difficulty, suitable_time, suitable_weather, suitable_season)
 2. `python recipes/tools/build_recipes.py` 재실행
-3. 맛(taste)·어울리는 월은 **자동 추론**되므로 값은 비워둬도 됨 — 단 `taste` 열 자체는 헤더에 있으니 칸(빈 값)은 유지(컬럼 정렬)
+3. 맛(taste)·어울리는 월은 **자동 추론**됩니다 — CSV에 `taste` 열은 없고 `infer_taste`가 ingredients 로 생성
 4. 잘못된 enum 값(예: 없는 style)이면 그 행만 스킵되고 경고 출력 → 콘솔 확인
 
 > ⚠️ 정규화 일관성: 재료는 `normalize_ingredient`로 표준화되어 저장됩니다. 같은 함수를 추천 시 보유 재료에도 적용하므로([normalize.py](../modules/normalize.py)), "양파"와 "양 파"가 어긋나지 않습니다.

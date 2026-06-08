@@ -52,7 +52,7 @@ flowchart LR
     D -->|아니오| F["재동의 필요<br/>(버전 올랐거나 첫 방문)"]
 ```
 
-핵심 함수 ([db_init.py:182-228](../modules/db_init.py#L182)):
+핵심 함수 ([db_init.py:224-271](../modules/db_init.py#L224)):
 - `record_consent(db, user, version)` — 동의 시각 + 버전 저장
 - `has_consent(db, user)` — **현재 버전으로** 동의했는지 (옛 버전 동의는 무효)
 - `get_consent_info(db, user)` — 동의 기록 조회 (사이드바 표시용)
@@ -61,7 +61,7 @@ flowchart LR
 
 ## ③ 잊혀질 권리 — 완전 삭제
 
-코드: [`db_init.py:231-268`](../modules/db_init.py#L231) `delete_user_complete()`
+코드: [`db_init.py:273-309`](../modules/db_init.py#L273) `delete_user_complete()`
 
 사용자가 "데이터 삭제 요청 → 확인 체크 → 영구 삭제"를 누르면([consent.py:158-167](../ui/consent.py#L158)), 그 사용자의 **모든 흔적**을 지웁니다. 외래키 의존 순서대로 자식부터 삭제해 무결성 위반을 막습니다:
 
@@ -78,7 +78,7 @@ flowchart TD
     I --> J["⑨ 디스크 ML 모델<br/>ModelRegistry.clear_user"]
 ```
 
-> 💡 **DB뿐 아니라 디스크 모델까지**: `models/<user_id>/` 폴더의 학습된 `.pkl`도 함께 지웁니다([db_init.py:262-268](../modules/db_init.py#L262)). 단, user_id가 경로로 안전하지 않으면 DB만 지우고 넘어갑니다(심층 방어).
+> 💡 **DB뿐 아니라 디스크 모델까지**: `models/<user_id>/` 폴더의 학습된 `.pkl`도 함께 지웁니다([db_init.py:306](../modules/db_init.py#L306)). 단, user_id가 경로로 안전하지 않으면 DB만 지우고 넘어갑니다(심층 방어).
 
 삭제 직후 UI는 `st.cache_resource.clear()` + `st.session_state.clear()`로 캐시·세션까지 비워 **그 자리에서 완전한 초기화**를 보장합니다([consent.py:164-167](../ui/consent.py#L164)).
 

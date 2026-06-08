@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS user_restrictions (
     PRIMARY KEY (user_id, ingredient)
 );
 
--- 키워드 피드백 투표 — LLM 초기 라벨을 사용자 응답으로 보정
+-- (미사용) 키워드 피드백 투표 테이블 — KeywordVoteRepo 삭제됨, 스키마만 잔존(cascade 정리용)
 CREATE TABLE IF NOT EXISTS recipe_keyword_votes (
     recipe_id TEXT,
     keyword   TEXT,

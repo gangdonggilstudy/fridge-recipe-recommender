@@ -5,7 +5,7 @@
 KaTeX 수식 + Mermaid 차트 + HTML 중간 산출물 지원.
 
 사용법:
-    python scripts/build_pdf.py all                  # 14개 전부 → 개별 PDF
+    python scripts/build_pdf.py all                  # 전체 → 개별 PDF
     python scripts/build_pdf.py all --merge          # + 합본 PDF (all_in_one.pdf)
     python scripts/build_pdf.py README.md            # 단일 파일
     python scripts/build_pdf.py docs/시연_시나리오.md

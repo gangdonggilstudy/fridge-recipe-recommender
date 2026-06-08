@@ -62,7 +62,7 @@ flowchart LR
 
 ### ① 추천 전환율 (세션 단위) — 대시보드 헤드라인·추이
 
-코드: [`metrics.py session_conversion`](../modules/metrics.py#L66)
+코드: [`metrics.py session_conversion`](../modules/metrics.py#L76)
 ```
 전환율 = 1개 이상 선택한 세션 수 / 전체 세션 수
 ```
@@ -70,7 +70,7 @@ flowchart LR
 
 ### ② 카드 CTR (노출 카드 단위) — 세부 분석
 
-코드: [`metrics.py:62`](../modules/metrics.py#L62)
+코드: [`metrics.py:64-67`](../modules/metrics.py#L64) (total_recommendations / total_selections; 카드 CTR 전용 함수는 없음)
 ```
 CTR = 선택된 카드 수 / 전체 노출 카드 수
 ```
@@ -97,6 +97,8 @@ CTR은 "골랐나"만 보지만, **순위 품질**은 "고른 걸 위쪽에 놨�
 delta = blender − rule   (양수면 ML이 더 나음)
 ```
 별도 실험 인프라 없이 **운영 데이터로 두 레짐을 관찰 비교**합니다. 단, 무작위 배정 A/B 가 아니라 "활성화 임계(50건) 통과 여부"로 자연 분기된 것이라(사용자 숙련도·기록량이 섞임), 엄밀한 인과보다 **관찰적 경향 지표**로 읽어야 합니다.
+
+> ℹ️ `compare_regimes`는 코드 함수로만 존재하며 **현재 대시보드 UI엔 미연결**입니다 — 필요 시 직접 호출해 확인하세요.
 
 ---
 

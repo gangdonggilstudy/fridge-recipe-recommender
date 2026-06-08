@@ -1,4 +1,4 @@
-"""선택 기록(history) — ML 학습 레이블·피처 + 드리프트. 노출/CTR 은 별도 repo."""
+"""선택 기록(history) — ML 학습 레이블·피처. 노출/CTR 은 별도 repo."""
 
 from pathlib import Path
 

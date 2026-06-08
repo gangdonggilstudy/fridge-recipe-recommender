@@ -405,7 +405,7 @@ def _render_feature_correlation(analyzer: FeatureAnalyzer) -> None:
     with st.expander("전체 상관계수 매트릭스 (히트맵)"):
         import altair as alt  # noqa: PLC0415 — lazy (streamlit transitive)
 
-        # 7×7 매트릭스 → long-format (피처1, 피처2, corr) 49 행
+        # 6×6 매트릭스(5 피처 + selected) → long-format (피처1, 피처2, corr) 36 행
         long_corr = (
             corr.round(3)
                 .stack()
