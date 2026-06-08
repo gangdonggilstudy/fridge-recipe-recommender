@@ -29,17 +29,20 @@ DRIFT_STABLE_THRESHOLD = 0.4  # 이하: 안정
 # _show_chart_help()가 session_state["_chart_help_key"]를 읽어 표시.
 _CHART_HELP: dict[str, tuple[str, str]] = {
     "ctr_trend": (
-        "일별 선택률 추이 읽는 법",
+        "일별 추천 전환율 추이 읽는 법",
         """\
-**선택률(CTR)** = 추천된 레시피 중 실제로 클릭(선택)한 비율.
+**추천 전환율** = 추천 한 번(세션)에 사용자가 **1개 이상 선택한** 비율 (세션 단위).
+카드 1장당 클릭률(CTR)이 아니라 "추천이 결국 선택으로 이어졌나"를 봅니다.
 
 | 수치 | 해석 |
 |---|---|
-| 상승 추세 | 추천 품질이 개선되는 중 |
-| 하락 추세 | 콘텐츠 신선도 저하 또는 취향 변화 — 레시피 추가 검토 |
-| 20% 이상 | 추천 시스템 일반 기준에서 양호한 수준 |
+| 상승 추세 | 추천이 점점 잘 맞는 중 |
+| 하락 추세 | 취향 변화·콘텐츠 신선도 저하 — 레시피 추가 검토 |
+| 높을수록 | 추천 한 번이 선택으로 이어지는 비율↑ |
 
-> 소규모 데이터에서는 날마다 큰 변동이 정상입니다. 절댓값보다 **추세(방향)**를 봐야 의미 있습니다.""",
+> 한 세션에 5장을 보여줘도 1장만 골라도 그 세션은 '전환'으로 칩니다(천장 100%).
+> 카드당 CTR(5장 중 1장 = 천장 20%)과 다른 지표입니다.
+> 소규모 데이터는 날마다 변동이 크니 절댓값보다 **추세(방향)**를 보세요.""",
     ),
     "style_ctr": (
         "스타일별 선택률 읽는 법",
@@ -211,28 +214,33 @@ def _chart_header(title: str, help_key: str) -> None:
 
 
 def _render_summary(metrics: MetricsCalculator) -> int:
-    """전체 요약 3지표 렌더. 노출 건수(shown) 반환 — 0이면 호출자가 early-return."""
+    """전체 요약 3지표 렌더. 노출 건수(shown) 반환 — 0이면 호출자가 early-return.
+
+    '추천 전환율'은 세션 단위(추천 한 번에 1개 이상 선택). 카드당 CTR 이 아니다.
+    """
     shown = metrics.total_recommendations()
     selected = metrics.total_selections()
-    # overall_ctr() 가 내부에서 같은 COUNT 2개를 다시 실행하므로 직접 계산해 쿼리 절반.
-    ctr = selected / shown if shown else 0.0
+    conversion = metrics.session_conversion()
 
     col1, col2, col3 = st.columns(3)
-    col1.metric("총 추천 노출", f"{shown:,}")
-    col2.metric("선택됨", f"{selected:,}")
-    col3.metric("전체 선택률", f"{ctr:.1%}")
+    col1.metric("총 추천 노출(카드)", f"{shown:,}")
+    col2.metric("선택된 카드", f"{selected:,}")
+    col3.metric(
+        "추천 전환율", f"{conversion:.1%}",
+        help="추천 한 번(세션)에 1개 이상 선택한 비율 — 세션 단위(카드당 CTR 아님)",
+    )
     return shown
 
 
-def _render_ctr_trend(metrics: MetricsCalculator) -> None:
-    """일별 선택률 추이 (최근 30일)."""
-    _chart_header("일별 선택률 추이 (최근 30일)", "ctr_trend")
-    daily = metrics.daily_metrics(30)
+def _render_conversion_trend(metrics: MetricsCalculator) -> None:
+    """일별 추천 전환율 추이 (최근 30일, 세션 단위)."""
+    _chart_header("일별 추천 전환율 추이 (최근 30일)", "ctr_trend")
+    daily = metrics.daily_session_conversion(30)
     if daily.empty:
         st.caption("기록이 충분히 쌓이면 그래프가 표시됩니다.")
     else:
-        st.line_chart(daily.set_index("date")[["ctr"]])
-        with st.expander("일별 상세"):
+        st.line_chart(daily.set_index("date")[["rate"]])
+        with st.expander("일별 상세 (rate = 전환 세션 ÷ 전체 세션)"):
             st.dataframe(daily, use_container_width=True, hide_index=True)
 
 
@@ -663,7 +671,7 @@ def render(
     )
 
     with tab_core:
-        _render_ctr_trend(metrics)
+        _render_conversion_trend(metrics)
         _render_eval_metrics(evaluator)
 
     with tab_user:

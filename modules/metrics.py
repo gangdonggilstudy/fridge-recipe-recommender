@@ -1,4 +1,11 @@
-"""추천 성능 메트릭 — 선택률 = SUM(selected) / COUNT (`recommendation_impressions`)."""
+"""추천 성능 메트릭 (`recommendation_impressions` 기반).
+
+두 가지 '선택' 지표를 구분:
+- **카드 CTR** = SUM(selected) / COUNT(노출 카드). 노출 1장당 클릭률(천장 = 1/노출수).
+  레시피·스타일·레짐별 비교 등 카드 단위 분석용.
+- **세션 전환율** = 1개 이상 선택한 세션 / 전체 세션. "추천 한 번이 선택으로 이어졌나"
+  (천장 1.0). 모니터링 헤드라인·추이는 이쪽 — 사용자 직관에 더 가깝다.
+"""
 
 from datetime import date, timedelta
 from pathlib import Path
@@ -62,6 +69,47 @@ class MetricsCalculator(BaseRepository):
     def overall_ctr(self) -> float:
         shown = self.total_recommendations()
         return self.total_selections() / shown if shown > 0 else 0.0
+
+    # ── 세션 단위 전환율 ──
+    # CTR(카드 1장당)과 달리, '추천 한 번(세션)에 1개 이상 선택했나'를 본다.
+    # 한 세션에 5장을 보여줘도 세션은 1회 → 천장이 0.2 가 아니라 1.0.
+
+    def session_conversion(self) -> float:
+        """전환율 = 1개 이상 선택한 세션 / 전체 세션."""
+        with self._connect() as con:
+            row = con.execute(
+                f"""WITH sess AS (
+                       SELECT session_id, MAX(selected) AS picked
+                       FROM {_IMPRESSIONS} GROUP BY session_id)
+                    SELECT COUNT(*) AS sessions, COALESCE(SUM(picked), 0) AS converted
+                    FROM sess""",
+            ).fetchone()
+        sessions = int(row[0]) if row else 0
+        converted = int(row[1]) if row else 0
+        return converted / sessions if sessions > 0 else 0.0
+
+    def daily_session_conversion(self, days_back: int = 30) -> pd.DataFrame:
+        """일별 세션 전환율. columns=[date, sessions, converted, rate]."""
+        start_date = (date.today() - timedelta(days=days_back)).isoformat()
+        with self._connect() as con:
+            df = pd.read_sql(
+                f"""WITH sess AS (
+                       SELECT session_id,
+                              MIN(date(timestamp)) AS date,
+                              MAX(selected) AS picked
+                       FROM {_IMPRESSIONS}
+                       WHERE date(timestamp) >= ?
+                       GROUP BY session_id)
+                    SELECT date, COUNT(*) AS sessions, SUM(picked) AS converted
+                    FROM sess GROUP BY date ORDER BY date""",
+                con,
+                params=[start_date],
+            )
+        if df.empty:
+            return df
+        df["converted"] = df["converted"].fillna(0).astype(int)
+        df["rate"] = df["converted"] / df["sessions"]
+        return df
 
     # ── 시계열 ──
 
