@@ -11,7 +11,6 @@ from modules.ml_model import FEATURE_LABELS, MLModel
 from modules.ml_ops_stats import (
     accuracy_distribution,
     count_active_users,
-    history_size_distribution,
     like_count_distribution,
     model_coefficients,
     model_disk_stats,
@@ -19,10 +18,6 @@ from modules.ml_ops_stats import (
     users_with_models,
 )
 from modules.recommend_eval import RecommendEvaluator
-
-# 컨셉 드리프트 분류 임계값 (detect_drift 반환 0.0~1.0 기준)
-DRIFT_ALERT_THRESHOLD = 0.7   # 이상: 큰 변화 — 경고
-DRIFT_STABLE_THRESHOLD = 0.4  # 이하: 안정
 
 # ── 차트 도움말 콘텐츠 ──────────────────────────────────────────────────────
 # key → (dialog 제목, 마크다운 설명). _chart_header()가 ❓ 버튼을 생성하고
@@ -44,30 +39,6 @@ _CHART_HELP: dict[str, tuple[str, str]] = {
 > 카드당 CTR(5장 중 1장 = 천장 20%)과 다른 지표입니다.
 > 소규모 데이터는 날마다 변동이 크니 절댓값보다 **추세(방향)**를 보세요.""",
     ),
-    "style_ctr": (
-        "스타일별 선택률 읽는 법",
-        """\
-**스타일별 선택률** = 각 요리 스타일(한식·중식 등)에서 추천 대비 선택 비율.
-
-- 특정 스타일이 현저히 낮으면 → 해당 스타일 레시피 품질 검토 필요
-- 고르게 분포하면 → 다양한 스타일에 걸쳐 추천이 고르게 작동 중
-- 특정 스타일이 압도적으로 높으면 → 사용자 선호 집중 또는 다른 스타일 레시피 부족""",
-    ),
-    "ml_sample": (
-        "학습 표본 분포 읽는 법",
-        """\
-사용자별 history 누적량을 5개 구간으로 집계한 막대 차트.
-
-| 구간 | 의미 |
-|---|---|
-| 0건 | 추천 기록 없음 |
-| 1~9건 | 초기 사용 단계 |
-| 10~49건 | ML 활성화 진입 전 |
-| **50건 이상** | **ML 모델 활성화 구간** — 개인화 추천 작동 |
-| 100건 이상 | ML 재학습 여러 번 거친 성숙 사용자 |
-
-50건 이상 구간 사용자 수가 많을수록 개인화 추천이 효과적으로 작동하는 환경입니다.""",
-    ),
     "ml_accuracy": (
         "모델 정확도 분포 읽는 법",
         """\
@@ -83,22 +54,6 @@ _CHART_HELP: dict[str, tuple[str, str]] = {
 | 60% 미만 | 선택/미선택 데이터 불균형 확인 |
 
 분포가 좁게 모여있을수록 사용자 전반의 모델 품질이 일관됩니다.""",
-    ),
-    "mode_compare": (
-        "추천 모드 비교 읽는 법",
-        """\
-추천 점수 계산 시 사용된 **모드별 선택률** 비교 (history.model_group 컬럼 기준).
-
-| 모드 | 의미 |
-|---|---|
-| `rule` | 5요소 가중합 (ML 모델 활성화 전 또는 활성화 임계 미달 사용자) |
-| `blender` | 학습된 LR 블렌더가 5차원 피처로 결합 (활성화 사용자) |
-
-- **blender > rule** → ML 학습이 추천 품질을 높이는 중 ✅
-- **rule ≈ blender** → ML 효과 아직 미미 (데이터 더 필요)
-- **rule > blender** → ML 모델 품질 점검 필요 (재학습/피처 검토)
-
-> user_id 해시 기반 임의 A/B 배정이 아니라 **사용자가 활성화 임계(history 50건) 통과 여부**가 모드를 결정합니다. 같은 사용자가 임계 통과 후 blender 로 자연 전환됩니다.""",
     ),
     "like_dist": (
         "좋아요 카운트 분포 읽는 법",
@@ -117,19 +72,6 @@ _CHART_HELP: dict[str, tuple[str, str]] = {
 > 도달률 < 10% → 정상 (차등 신호 살아있음) / > 30% → 상수 상향 검토 / 신선도 < 50% → `LIKE_HALFLIFE_DAYS` 단축 검토.
 >
 > **시드 데이터(시연 환경)** 에선 좋아요가 모두 `CURRENT_TIMESTAMP` 로 생성돼 신선도 ≈ 100% 가 정상입니다.""",
-    ),
-    "drift": (
-        "컨셉 드리프트 읽는 법",
-        """\
-최근 취향과 초기 취향 간 **정규화된 유클리드 거리** (0 = 안정, 1 = 극단 변화).
-
-| 범위 | 상태 |
-|---|---|
-| 0.7 이상 | ⚠ 큰 변화 — 재학습 권장 |
-| 0.4 ~ 0.7 | 🔶 점진적 변화 |
-| 0.4 미만 | ✅ 안정 |
-
-> 기록 40건 미만인 사용자는 `-` 로 표시됩니다(비교할 이전 기록 부족).""",
     ),
     "eval_metrics": (
         "추천 품질 메트릭 읽는 법",
@@ -244,28 +186,6 @@ def _render_conversion_trend(metrics: MetricsCalculator) -> None:
             st.dataframe(daily, use_container_width=True, hide_index=True)
 
 
-def _render_aggregates(metrics: MetricsCalculator) -> pd.DataFrame:
-    """사용자별·인기 레시피·스타일별 집계. per_user 는 드리프트 섹션이 재사용."""
-    st.subheader("사용자별 요약")
-    per_user = metrics.per_user_summary()
-    if not per_user.empty:
-        st.dataframe(per_user, use_container_width=True, hide_index=True)
-
-    st.subheader("선택 상위 레시피")
-    top = metrics.per_recipe_summary(top_n=10)
-    if not top.empty:
-        st.dataframe(top, use_container_width=True, hide_index=True)
-
-    _chart_header("스타일별 선택률 (시스템 레시피)", "style_ctr")
-    style_df = metrics.per_style_breakdown()
-    if not style_df.empty:
-        st.dataframe(style_df, use_container_width=True, hide_index=True)
-        st.bar_chart(style_df.set_index("style")[["ctr"]])
-
-    _render_top_by_context(metrics)
-    return per_user
-
-
 def _render_top_by_context(metrics: MetricsCalculator) -> None:
     """🌡 월·날씨·시간대 차원별 카테고리 row × top 3 인기 레시피."""
     st.divider()
@@ -289,7 +209,7 @@ def _render_top_by_context(metrics: MetricsCalculator) -> None:
 def _render_ml_ops(
     history_repo: HistoryRepo, ml_model: MLModel, like_repo: LikeRepo,
 ) -> None:
-    """시스템 차원 ML 운영 통계 — 활성화 사용자·모델 상태·표본 분포·디스크·좋아요 분포."""
+    """시스템 차원 ML 운영 통계 — 활성화 사용자·모델 상태·디스크·좋아요 분포."""
     active = count_active_users(history_repo)
     disk = model_disk_stats(ml_model.registry)
 
@@ -310,18 +230,6 @@ def _render_ml_ops(
         st.info("기록·모델 데이터가 쌓이면 표시됩니다.")
     else:
         st.dataframe(df, use_container_width=True, hide_index=True)
-
-    st.divider()
-    _chart_header("📊 학습 표본 분포", "ml_sample")
-    st.caption(
-        "history 누적 구간(0 / 1-9 / 10-49 / 50-99 / 100+) 별 사용자 수. "
-        "활성화 임계값 50 통과 풀 크기를 한눈에 — 사용자 수가 많아도 5 막대로 요약."
-    )
-    dist = history_size_distribution(history_repo)
-    if dist.empty:
-        st.info("기록이 쌓이면 표시됩니다.")
-    else:
-        st.bar_chart(dist)
 
     _render_ml_drilldown(ml_model)
     _render_recent_training(ml_model)
@@ -456,48 +364,6 @@ def _render_like_distribution(like_repo: LikeRepo) -> None:
     st.caption(
         f"P50={p['p50']} / P75={p['p75']} / P90={p['p90']} / max={p['max']}"
     )
-
-
-def _render_mode_compare(metrics: MetricsCalculator) -> None:
-    """추천 모드(rule vs blender) 비교 (데이터 있을 때만).
-
-    history.model_group 컬럼 기준 — user_id 해시 기반 임의 A/B 가 아니라,
-    사용자의 ML 활성화 임계 통과 여부가 모드를 결정함.
-    """
-    group_df = metrics.per_group_summary()
-    if not group_df.empty:
-        st.divider()
-        _chart_header("추천 모드(rule vs blender) 비교", "mode_compare")
-        st.dataframe(group_df, use_container_width=True, hide_index=True)
-        st.bar_chart(group_df.set_index("grp")[["ctr"]])
-
-
-def _render_drift(history_repo: HistoryRepo, per_user: pd.DataFrame) -> None:
-    """컨셉 드리프트 모니터링 (사용자별 점수 분포 거리)."""
-    if not per_user.empty and "user_id" in per_user.columns:
-        st.divider()
-        _chart_header("📉 컨셉 드리프트", "drift")
-        st.caption(
-            "최근 20건과 그 이전 기록 간 선호 변화 정도. "
-            "0 = 안정, 1 = 큰 변화. 기록 40건 미만은 '-'."
-        )
-
-        def _drift_label(score: float | None) -> str:
-            if score is None:
-                return "-"
-            if score >= DRIFT_ALERT_THRESHOLD:
-                return f"⚠ {score:.2f}"
-            if score <= DRIFT_STABLE_THRESHOLD:
-                return f"✅ {score:.2f}"
-            return f"🔶 {score:.2f}"
-
-        drift_rows = []
-        for uid in per_user["user_id"].tolist():
-            score = history_repo.detect_drift(uid)
-            drift_rows.append({"user_id": uid, "드리프트": _drift_label(score)})
-
-        drift_df = pd.DataFrame(drift_rows)
-        st.dataframe(drift_df, use_container_width=True, hide_index=True)
 
 
 def _render_eval_metrics(evaluator: RecommendEvaluator | None) -> None:
@@ -656,7 +522,7 @@ def render(
     데이터가 없으면 각 섹션은 안내 문구로 graceful 처리(빈 화면 방지).
     상단 요약 메트릭은 탭 밖 — 모든 탭에서 공통 KPI 가 보이도록.
     개인 ML 모델 강제 재학습은 사용자 사이드바(`ui/ml_status`); 이 탭은
-    시스템 차원 운영 통계만 (활성화 사용자 수·모델 상태 표·표본 분포·디스크).
+    시스템 차원 운영 통계만 (활성화 사용자 수·모델 상태 표·디스크).
     """
     st.header("📊 모니터링 대시보드")
     st.caption("🛡️ 운영자 전용 — 전체 사용자 데이터·운영 지표 노출.")
@@ -675,9 +541,7 @@ def render(
         _render_eval_metrics(evaluator)
 
     with tab_user:
-        per_user = _render_aggregates(metrics)
-        _render_mode_compare(metrics)
-        _render_drift(history_repo, per_user)
+        _render_top_by_context(metrics)
 
     with tab_ml:
         _render_ml_ops(history_repo, ml_model, like_repo)
