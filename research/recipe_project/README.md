@@ -190,7 +190,8 @@ cd fridge-recipe-recommender/research/recipe_project
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate #mac
+.\.venv\Scripts\activate #windows
 ```
 
 ---
