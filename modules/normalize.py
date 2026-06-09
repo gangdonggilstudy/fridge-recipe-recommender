@@ -111,7 +111,15 @@ def get_category(ingredient: str) -> str | None:
 
 
 # 순서 있는 카테고리 (벡터 차원 순서 보존 — preference.FEATURE_KEYS 등에서 *전개)
-STYLE_KEYS: tuple[str, ...] = ("한식", "양식", "중식", "일식")
+# STYLE_KEYS: tuple[str, ...] = ("한식", "양식", "중식", "일식")
+STYLE_KEYS: tuple[str, ...] = (
+    "메인반찬",
+    "찌개",
+    "국/탕",
+    "밥/죽/떡",
+    "면/만두",
+    "양식",
+)
 TASTE_KEYS: tuple[str, ...] = ("매운맛", "담백함", "단맛", "짭짤함", "고소함", "감칠맛")
 
 ALLOWED_ENUMS: dict[str, set[str]] = {

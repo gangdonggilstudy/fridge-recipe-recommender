@@ -11,30 +11,53 @@ from modules.restriction_repo import RestrictionRepo
 # 음식 카드 — 스타일(4) × 맛(6) 조합을 고르게 표현.
 # 사용자에게는 '음식'만 보이고, 내부에서 (style·taste) 차원으로 선호 벡터를 유도한다.
 FOOD_CARDS = [
-    {"name": "김치찌개",         "style": "한식", "taste": "매운맛"},
-    {"name": "된장찌개",         "style": "한식", "taste": "담백함"},
-    {"name": "불고기",           "style": "한식", "taste": "단맛"},
-    {"name": "간장 닭조림",       "style": "한식", "taste": "짭짤함"},
-    {"name": "참깨 비빔국수",     "style": "한식", "taste": "고소함"},
-    {"name": "사골국",           "style": "한식", "taste": "감칠맛"},
+    # 메인반찬
+    {"name": "제육볶음",       "style": "메인반찬", "taste": "매운맛"},
+    {"name": "두부조림",       "style": "메인반찬", "taste": "담백함"},
+    {"name": "불고기",         "style": "메인반찬", "taste": "단맛"},
+    {"name": "간장 닭조림",    "style": "메인반찬", "taste": "짭짤함"},
+    {"name": "참깨 나물무침",  "style": "메인반찬", "taste": "고소함"},
+    {"name": "버섯 소고기볶음", "style": "메인반찬", "taste": "감칠맛"},
+
+    # 찌개
+    {"name": "김치찌개",       "style": "찌개", "taste": "매운맛"},
+    {"name": "된장찌개",       "style": "찌개", "taste": "담백함"},
+    {"name": "고추장찌개",     "style": "찌개", "taste": "단맛"},
+    {"name": "참치찌개",       "style": "찌개", "taste": "짭짤함"},
+    {"name": "들깨 순두부찌개", "style": "찌개", "taste": "고소함"},
+    {"name": "부대찌개",       "style": "찌개", "taste": "감칠맛"},
+
+    # 국/탕
+    {"name": "육개장",         "style": "국/탕", "taste": "매운맛"},
+    {"name": "맑은 콩나물국",  "style": "국/탕", "taste": "담백함"},
+    {"name": "단호박죽",       "style": "국/탕", "taste": "단맛"},
+    {"name": "미역국",         "style": "국/탕", "taste": "짭짤함"},
+    {"name": "들깨탕",         "style": "국/탕", "taste": "고소함"},
+    {"name": "사골국",         "style": "국/탕", "taste": "감칠맛"},
+
+    # 밥/죽/떡
+    {"name": "김치볶음밥",     "style": "밥/죽/떡", "taste": "매운맛"},
+    {"name": "야채죽",         "style": "밥/죽/떡", "taste": "담백함"},
+    {"name": "단호박죽",       "style": "밥/죽/떡", "taste": "단맛"},
+    {"name": "간장계란밥",     "style": "밥/죽/떡", "taste": "짭짤함"},
+    {"name": "참깨 주먹밥",    "style": "밥/죽/떡", "taste": "고소함"},
+    {"name": "버섯덮밥",       "style": "밥/죽/떡", "taste": "감칠맛"},
+
+    # 면/만두
+    {"name": "비빔국수",       "style": "면/만두", "taste": "매운맛"},
+    {"name": "잔치국수",       "style": "면/만두", "taste": "담백함"},
+    {"name": "간장비빔면",     "style": "면/만두", "taste": "단맛"},
+    {"name": "칼국수",         "style": "면/만두", "taste": "짭짤함"},
+    {"name": "들기름 막국수",  "style": "면/만두", "taste": "고소함"},
+    {"name": "만두전골",       "style": "면/만두", "taste": "감칠맛"},
+
+    # 양식
     {"name": "아라비아타 파스타", "style": "양식", "taste": "매운맛"},
     {"name": "샐러드",           "style": "양식", "taste": "담백함"},
     {"name": "함박스테이크",      "style": "양식", "taste": "단맛"},
     {"name": "올리브 파스타",     "style": "양식", "taste": "짭짤함"},
     {"name": "까르보나라",        "style": "양식", "taste": "고소함"},
     {"name": "버섯 크림 파스타",  "style": "양식", "taste": "감칠맛"},
-    {"name": "마라탕",           "style": "중식", "taste": "매운맛"},
-    {"name": "계란볶음밥",        "style": "중식", "taste": "담백함"},
-    {"name": "탕수육",           "style": "중식", "taste": "단맛"},
-    {"name": "굴소스 볶음밥",     "style": "중식", "taste": "짭짤함"},
-    {"name": "깨소금 냉채",       "style": "중식", "taste": "고소함"},
-    {"name": "짬뽕",             "style": "중식", "taste": "감칠맛"},
-    {"name": "매운 라멘",        "style": "일식", "taste": "매운맛"},
-    {"name": "초밥",             "style": "일식", "taste": "담백함"},
-    {"name": "데리야키 치킨",     "style": "일식", "taste": "단맛"},
-    {"name": "쯔유 소바",        "style": "일식", "taste": "짭짤함"},
-    {"name": "참깨 냉모밀",       "style": "일식", "taste": "고소함"},
-    {"name": "샤부샤부",         "style": "일식", "taste": "감칠맛"},
 ]
 
 

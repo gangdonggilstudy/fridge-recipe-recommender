@@ -143,7 +143,8 @@ def build():
             try:
                 recipe_id = f"r{row_idx - 1:03d}"  # r001, r002 ...
                 name = row["name"].strip()
-                style = validate_enum("style", row["style"])
+                style_value = (row.get("style") or "").strip()
+                style = validate_enum("style", style_value) if style_value else ""
                 difficulty = validate_enum("difficulty", row["difficulty"])
                 source_url = (row.get("source_url") or "").strip()
 

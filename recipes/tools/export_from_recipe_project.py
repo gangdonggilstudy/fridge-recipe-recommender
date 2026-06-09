@@ -464,28 +464,67 @@ def split_ingredients(raw_value) -> list[str]:
 
     return result
 
-def map_style(category_type: str, category_types: str, title: str) -> str:
-    """
-    앱 recipes_source.csv의 style은 한식/양식/중식/일식만 허용된다.
-    recipe_project의 category_type은 메인반찬, 찌개, 국/탕 같은 메뉴 종류라서 그대로 넣으면 build_recipes.py 검증에서 실패한다.
-    """
+ALLOWED_RECIPE_TYPES = {
+    "메인반찬",
+    "찌개",
+    "국/탕",
+    "밥/죽/떡",
+    "면/만두",
+    "양식",
+}
 
-    text_value = ",".join([
-        normalize_text(category_type),
-        normalize_text(category_types),
-        normalize_text(title),
-    ])
+def safe_text(value) -> str:
+    if value is None:
+        return ""
+    if pd.isna(value):
+        return ""
+    return str(value).strip()
 
-    if "양식" in text_value or "파스타" in text_value or "스테이크" in text_value:
-        return "양식"
+def map_style(category_type, category_types, title=None) -> str:
+    candidates: list[str] = []
 
-    if "중식" in text_value or "짜장" in text_value or "짬뽕" in text_value or "마라" in text_value:
-        return "중식"
+    category_type_text = safe_text(category_type)
+    category_types_text = safe_text(category_types)
 
-    if "일식" in text_value or "우동" in text_value or "초밥" in text_value or "돈까스" in text_value:
-        return "일식"
+    if category_type_text:
+        candidates.append(category_type_text)
 
-    return "한식"
+    if category_types_text:
+        candidates.extend([
+            v.strip()
+            for v in category_types_text.split(",")
+            if v.strip()
+        ])
+
+    for value in candidates:
+        if value in ALLOWED_RECIPE_TYPES:
+            return value
+
+    # 계절요리처럼 category_type/category_types가 없는 데이터는 비워둔다.
+    return ""
+    
+# def map_style(category_type: str, category_types: str, title: str) -> str:
+#     """
+#     앱 recipes_source.csv의 style은 한식/양식/중식/일식만 허용된다.
+#     recipe_project의 category_type은 메인반찬, 찌개, 국/탕 같은 메뉴 종류라서 그대로 넣으면 build_recipes.py 검증에서 실패한다.
+#     """
+
+#     text_value = ",".join([
+#         normalize_text(category_type),
+#         normalize_text(category_types),
+#         normalize_text(title),
+#     ])
+
+#     if "양식" in text_value or "파스타" in text_value or "스테이크" in text_value:
+#         return "양식"
+
+#     if "중식" in text_value or "짜장" in text_value or "짬뽕" in text_value or "마라" in text_value:
+#         return "중식"
+
+#     if "일식" in text_value or "우동" in text_value or "초밥" in text_value or "돈까스" in text_value:
+#         return "일식"
+
+#     return "한식"
 
 
 def map_difficulty(value: str) -> str:

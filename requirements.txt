@@ -1,4 +1,5 @@
 # 핵심 의존성
+
 streamlit>=1.31
 pandas>=2.0
 numpy>=1.24
@@ -7,15 +8,33 @@ requests>=2.31
 python-dotenv>=1.0
 streamlit-geolocation>=0.0.10
 
+# 크롤링 / HTML 파싱
+
+beautifulsoup4>=4.12
+lxml>=5.0
+
+# DB 연동 / 앱용 CSV 생성
+
+SQLAlchemy>=2.0
+pymysql>=1.1
+
+# 분석 / 시각화
+
+matplotlib>=3.8
+jupyter>=1.0
+
 # 음성 입력 (선택) — 미설치 시 음성 입력 기능만 비활성화
+
 faster-whisper>=1.0
 
 # PDF 빌드 (scripts/build_pdf.py) — Chrome/Edge headless 추가 필요
+
 markdown>=3.5
 Pygments>=2.16
 pypdf>=4.0
 
 # 개발용
+
 pytest>=7.4
 pytest-cov>=4.1
 ruff>=0.1
