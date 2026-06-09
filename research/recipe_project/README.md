@@ -278,9 +278,9 @@ python -m scripts.run_crawler_by_type --collect-kind category --target-year 2025
 ### 4.6 계절별 레시피 수집
 
 계절 점수를 계산하려면 봄/여름/가을/겨울 계절 테마 레시피를 수집합니다.
-
+만개의 레시피 - 제철요리 : https://www.10000recipe.com/theme/list.html?t1=101010
 ```bash
-python -m scripts.run_crawler_season_theme --limit 20 --sleep 0.5 --max-page 10
+python -m scripts.run_crawler_season_theme --limit 61 --sleep 0.5 --max-page 100
 ```
 
 ---
