@@ -211,11 +211,7 @@ python -m scripts.init_db
 ```
 
 SQLite는 별도 DB 서버를 실행할 필요가 없습니다.
-수집 데이터는 아래 파일에 저장됩니다.
-
-```text
-data/recipe_project.db
-```
+수집 데이터는 `data/recipe_project.db` 파일에 저장됩니다.
 
 ---
 
