@@ -190,7 +190,8 @@ cd fridge-recipe-recommender/research/recipe_project
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate #mac
+.\.venv\Scripts\activate #windows
 ```
 
 ---
@@ -210,11 +211,7 @@ python -m scripts.init_db
 ```
 
 SQLite는 별도 DB 서버를 실행할 필요가 없습니다.
-수집 데이터는 아래 파일에 저장됩니다.
-
-```text
-data/recipe_project.db
-```
+수집 데이터는 `data/recipe_project.db` 파일에 저장됩니다.
 
 ---
 
@@ -257,14 +254,33 @@ python -m scripts.run_crawler_by_type --collect-kind method --limit 20 --sleep 0
 
 `--limit 20` 값을 `50`, `100`, `400`처럼 바꾸면 그룹별 수집 개수를 늘릴 수 있습니다.
 
+특정 연도 데이터만 수집하려면 `--target-year` 옵션을 추가합니다.
+예를 들어 2025년에 등록된 레시피만 종류별로 100개씩 수집하려면 아래처럼 실행합니다.
+
+```bash
+python -m scripts.run_crawler_by_type --collect-kind category --target-year 2025 --limit 100 --sleep 0.5 --max-page 300
+```
+
+위 명령어는 최신순으로 레시피 목록을 탐색하면서 2025년 데이터가 나오는 지점부터 수집합니다.
+
+| 옵션               | 설명                                                |
+| ---------------- | ------------------------------------------------- |
+| `--collect-kind` | 수집 기준 선택. `category`, `ingredient`, `method` 중 선택 |
+| `--target-year`  | 특정 연도에 등록된 레시피만 수집                                |
+| `--limit`        | 그룹별 수집 개수                                         |
+| `--sleep`        | 요청 사이 대기 시간                                       |
+| `--max-page`     | 그룹별 최대 탐색 페이지 수                                   |
+
+`--target-year`를 생략하면 특정 연도 제한 없이 최신순으로 수집합니다. 2025년처럼 이전 연도 데이터를 찾는 경우에는 최신 데이터가 앞에 많이 있을 수 있으므로 `--max-page` 값을 넉넉하게 지정하는 것이 좋습니다.
+
 ---
 
 ### 4.6 계절별 레시피 수집
 
 계절 점수를 계산하려면 봄/여름/가을/겨울 계절 테마 레시피를 수집합니다.
-
+만개의 레시피 - 제철요리 : https://www.10000recipe.com/theme/list.html?t1=101010
 ```bash
-python -m scripts.run_crawler_season_theme --limit 20 --sleep 0.5 --max-page 10
+python -m scripts.run_crawler_season_theme --limit 61 --sleep 0.5 --max-page 100
 ```
 
 ---
