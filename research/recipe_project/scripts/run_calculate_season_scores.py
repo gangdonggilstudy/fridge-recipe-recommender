@@ -19,26 +19,48 @@ def parse_args():
     parser.add_argument(
         "--top-n",
         type=int,
-        default=10,
+        default=50,
         help="계절별 대표 메인 재료 Top N. 기본값 10"
     )
 
     return parser.parse_args()
 
+from collections import defaultdict
+
+SEASON_TYPES = ["봄", "여름", "가을", "겨울"]
+
 
 def build_season_ingredient_map(top_n: int) -> dict[str, set[str]]:
-    rows = find_season_main_ingredients(top_n=top_n)
-
     season_ingredient_map = defaultdict(set)
 
-    for row in rows:
-        season_type = row["season_type"]
-        ingredient_name = row["ingredient_name"]
+    for season_type in SEASON_TYPES:
+        rows = find_season_main_ingredients(
+            season_type=season_type,
+            top_n=top_n,
+        )
 
-        if season_type and ingredient_name:
-            season_ingredient_map[season_type].add(ingredient_name)
+        print(f"[DEBUG] {season_type} 대표 재료 수: {len(rows)}")
+
+        for row in rows:
+            ingredient_name = row.get("ingredient_name")
+
+            if ingredient_name:
+                season_ingredient_map[season_type].add(ingredient_name)
 
     return dict(season_ingredient_map)
+# def build_season_ingredient_map(top_n: int) -> dict[str, set[str]]:
+#     rows = find_season_main_ingredients(top_n=top_n)
+
+#     season_ingredient_map = defaultdict(set)
+
+#     for row in rows:
+#         season_type = row["season_type"]
+#         ingredient_name = row["ingredient_name"]
+
+#         if season_type and ingredient_name:
+#             season_ingredient_map[season_type].add(ingredient_name)
+
+#     return dict(season_ingredient_map)
 
 
 def build_recipe_ingredient_map() -> dict[str, set[str]]:
