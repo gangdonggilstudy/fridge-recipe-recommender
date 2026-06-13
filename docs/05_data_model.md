@@ -49,6 +49,9 @@ erDiagram
     users ||--o{ user_restrictions : "알레르기/기피"
     users ||--o{ custom_recipes : "작성한 레시피"
     custom_recipes ||--o{ custom_recipe_ingredients : "재료"
+    custom_recipes ||--o{ recipe_likes : "좋아요(삭제 시 cascade)"
+    custom_recipes ||--o{ recommendation_impressions : "노출(삭제 시 cascade)"
+    custom_recipes ||--o{ recipe_keyword_votes : "키워드 투표(삭제 시 cascade)"
 
     users {
         TEXT user_id PK
@@ -89,7 +92,8 @@ erDiagram
         TEXT recipe_id PK
         TEXT user_id
         INTEGER rec_rank
-        INTEGER selected "클릭 여부"
+        INTEGER selected "최종 선택 0/1"
+        INTEGER acted "행동 발생 여부 0/1 (약한 음성 신호)"
         REAL total_score
     }
     recipe_likes {

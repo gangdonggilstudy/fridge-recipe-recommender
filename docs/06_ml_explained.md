@@ -40,7 +40,7 @@ flowchart LR
 
 ## 5개의 입력 (피처)
 
-코드: [`ml_model.FEATURES`](../modules/ml_model.py#L32)
+코드: [`ml_model.FEATURES`](../modules/ml_model.py#L33)
 
 | # | 피처 | 의미 |
 |---|---|---|
@@ -88,7 +88,7 @@ model.fit(X, y, sample_weight=...)     # 최신성 가중 학습
 
 ## 언제 학습하나? (활성화 & 재학습)
 
-코드: [`MLModel.maybe_train()`](../modules/ml_model.py#L94)
+코드: [`MLModel.maybe_train()`](../modules/ml_model.py#L95)
 
 | 조건 | 동작 |
 |---|---|
@@ -103,7 +103,7 @@ model.fit(X, y, sample_weight=...)     # 최신성 가중 학습
 
 ## "선택만 하면" AI가 영영 못 배운다? — 약한 미선택 신호
 
-코드: [`MLTrainer`](../modules/ml_trainer.py#L37) · [`load_with_weak`](../modules/ml_training_data.py#L55) · [`WEAK_NEGATIVE_WEIGHT`](../modules/ml_model.py#L28)
+코드: [`MLTrainer`](../modules/ml_trainer.py#L37) · [`load_with_weak`](../modules/ml_training_data.py#L60) · [`WEAK_NEGATIVE_WEIGHT`](../modules/ml_model.py#L29)
 
 > 🍳 **비유**: 요리 심사위원에게 **합격시킨 요리만** 잔뜩 보여주고 **탈락시킨 요리는 한 번도** 안 보여주면, 그 위원은 "합격과 탈락을 가르는 기준"을 못 배웁니다. 둘 다 있어야 경계선을 그을 수 있죠.
 
@@ -330,7 +330,7 @@ ML은 망가질 수 있으므로 여러 폴백이 있습니다:
 **왜 우선순위가 낮은가 (영향이 작음).**
 
 - 월은 추천 점수의 **약 2%** 비중뿐입니다(재료·소모·취향이 80%). 월 신호를 완벽히 고쳐도 최종 순위는 조금만 바뀝니다.
-- 레시피 596개 중 진짜 월 정보가 의미 있는 건 **4개(명절·제철)** 뿐입니다.
+- 레시피 823개 중 진짜 월 정보가 의미 있는 건 **명절·제철 음식 소수** 뿐입니다.
 - 통계적으로 의미 있으려면 **실서비스 규모**의 데이터가 필요합니다(데모로는 부족).
 
 **결론.** "여유가 생기면, 명절·제철 음식 한정으로 (레시피×월) CTR을 집계해 적합월을 데이터 기반으로 다듬는다" — **낮은 우선순위 백로그**. 핵심 추천 레버는 여전히 재료·소모·취향입니다.

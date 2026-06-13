@@ -17,6 +17,9 @@
 | **python-dotenv** | 핵심 | `.env` 로딩 | 환경변수·API 키 |
 | **streamlit-geolocation** | 핵심(선택동작) | 브라우저 위치 | 위치 위젯 |
 | **faster-whisper** | 선택 | 음성→텍스트(STT) | 음성 재료 입력 |
+| **beautifulsoup4·lxml** | 데이터(서브) | HTML 파싱 | 레시피 크롤러 (`research/recipe_project/crawler/`) |
+| **SQLAlchemy·pymysql** | 데이터(서브) | DB ORM·MySQL 드라이버 | 크롤링 DB·앱용 CSV 생성 (`research/`, `recipes/tools/`) |
+| **matplotlib·jupyter** | 분석(서브) | 시각화·노트북 | 회귀/분포 분석 (`research/recipe_project/analysis/`) |
 | **markdown·Pygments·pypdf** | 빌드 | 문서→PDF | `scripts/build_pdf.py` |
 | **pytest·pytest-cov·ruff** | 개발 | 테스트·린트 | 개발 시 |
 | (번들) **joblib** | — | 모델 직렬화 | 학습 모델 저장 |
@@ -140,7 +143,9 @@ streamlit이 함께 설치. [`ui/monitoring.py`](../ui/monitoring.py) 피처 분
 
 ## 의존성 철학
 
-이 프로젝트는 **핵심 5개(streamlit·pandas·numpy·scikit-learn·requests)만 필수**이고, 나머지는 모두 **선택**입니다. AI 키, 음성, 위치, OCR이 전부 없어도 추천·UI는 완전히 동작합니다 — 모든 외부 의존성에 fallback이 있기 때문입니다. → [03. 용어 사전](03_glossary.md)의 "fallback" 참고
+**실행 중인 앱** 기준으로는 **핵심 5개(streamlit·pandas·numpy·scikit-learn·requests)만 필수**이고, 음성·위치·OCR 등은 모두 **선택**입니다. AI 키, 음성, 위치, OCR이 전부 없어도 추천·UI는 완전히 동작합니다 — 모든 외부 의존성에 fallback이 있기 때문입니다.
+
+단, requirements.txt에는 앱 런타임이 아닌 **데이터 파이프라인용 의존성**(beautifulsoup4·lxml·SQLAlchemy·pymysql·matplotlib·jupyter)도 포함됩니다. 이들은 레시피 크롤링·DB 적재·오프라인 분석(`research/recipe_project/`, `recipes/tools/`)에서만 쓰이고 앱 실행에는 필요 없습니다. → [03. 용어 사전](03_glossary.md)의 "fallback" 참고
 
 ---
 

@@ -8,7 +8,7 @@ from modules.recipe_repo import RecipeRepo
 from modules.restriction_repo import RestrictionRepo
 
 
-# 음식 카드 — 스타일(4) × 맛(6) 조합을 고르게 표현.
+# 음식 카드 — 스타일(6) × 맛(6) 조합을 고르게 표현.
 # 사용자에게는 '음식'만 보이고, 내부에서 (style·taste) 차원으로 선호 벡터를 유도한다.
 FOOD_CARDS = [
     # 메인반찬
