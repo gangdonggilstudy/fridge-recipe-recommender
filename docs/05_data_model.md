@@ -66,7 +66,7 @@ erDiagram
     }
     preference_vectors {
         TEXT user_id PK
-        TEXT feature PK "한식/매운맛/short..."
+        TEXT feature PK "찌개/매운맛/short..."
         REAL value "선호 강도"
     }
     fridge {
@@ -127,7 +127,7 @@ erDiagram
 | 테이블 | 역할 | 누가 씀 |
 |---|---|---|
 | **users** | 사용자 기본 정보 + 동의 + 인구통계 + 위치 | `DemographicsRepo`, `LocationRepo`, `db_init` |
-| **preference_vectors** | 사용자 취향을 숫자로 (한식 1.2, 매운맛 0.8...) | `PreferenceManager` |
+| **preference_vectors** | 사용자 취향을 숫자로 (찌개 1.2, 매운맛 0.8...) | `PreferenceManager` |
 | **history** | 추천을 **선택/거부한 기록** + 그때의 5점수 → **ML 학습 데이터** | `HistoryRepo` |
 | **recommendation_impressions** | 추천 카드가 **보여진** 기록 → CTR 계산 + 안 고른 노출(acted=0)을 ML **약한 미선택** 신호로도 사용(5피처 함께 저장) | `RecommendationImpressionRepo` |
 | **fridge** | 보유 재료 + 유통기한 | `FridgeRepo` |

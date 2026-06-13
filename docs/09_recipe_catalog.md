@@ -32,7 +32,7 @@ python recipes/tools/build_recipes.py   # 최초 1회 (또는 CSV 수정 후 재
 [`SCHEMA_SQL`](../recipes/tools/build_recipes.py#L49)이 `DROP TABLE` 후 다시 만들어, **여러 번 실행해도 항상 깨끗한 최신 상태**가 됩니다. 3개 테이블: `recipes`, `recipe_ingredients`, `meta`.
 
 ### ② 행마다 검증 + 변환
-CSV 한 행 → 레시피 한 개. ID는 `r001`, `r002`... 순번으로 자동 부여([build_recipes.py:143](../recipes/tools/build_recipes.py#L143)). 각 필드를 `validate_enum`으로 검증하고(잘못된 값은 그 행만 스킵), 두 가지를 **자동 추론**합니다:
+CSV 한 행 → 레시피 한 개. ID는 `r001`, `r002`... 순번으로 자동 부여([build_recipes.py:144](../recipes/tools/build_recipes.py#L144)). 각 필드를 `validate_enum`으로 검증하고(잘못된 값은 그 행만 스킵), 두 가지를 **자동 추론**합니다:
 
 - **맛(taste)**: 재료에서 자동 추론 (`infer_taste`) — 사람이 안 적어도 됨
 - **어울리는 월(suitable_month)**: 계절 입력 → 월로 확장 (아래 ③)
@@ -44,7 +44,7 @@ CSV 한 행 → 레시피 한 개. ID는 `r001`, `r002`... 순번으로 자동 �
 
 ## 핵심: 계절 → 월 확장 (3단계 우선순위)
 
-CSV에는 사람이 **계절**("여름")만 적지만, 추천은 더 정밀한 **월**(6월/7월/8월) 단위로 작동합니다([why는 03 용어사전의 month vs season](03_glossary.md)). 빌드가 이 변환을 합니다 — 단, **명절·제철은 더 좁게** 한정하는 3단계 우선순위가 있습니다([`infer_months`](../recipes/tools/build_recipes.py#L112)):
+CSV에는 사람이 **계절**("여름")만 적지만, 추천은 더 정밀한 **월**(6월/7월/8월) 단위로 작동합니다([why는 03 용어사전의 month vs season](03_glossary.md)). 빌드가 이 변환을 합니다 — 단, **명절·제철은 더 좁게** 한정하는 3단계 우선순위가 있습니다([`infer_months`](../recipes/tools/build_recipes.py#L113)):
 
 ```mermaid
 flowchart TD
@@ -73,7 +73,7 @@ flowchart TD
 | `recipe_ingredients` | 레시피-재료 (1:N) | recipe_id, ingredient (PK 묶음) |
 | `meta` | 카탈로그 메타 (key/value 테이블) | key, value — rows: version·updated_at·recipe_count |
 
-`suitable_month`는 `"1월,9월"` 같은 콤마 문자열로 저장됩니다([build_recipes.py:174](../recipes/tools/build_recipes.py#L174)). 이게 나중에 추천 시 [`temporal_fit_score`](../modules/context.py)로 "지금이 이 레시피에 얼마나 제철인가(0/0.5/1)" 판정의 입력이 됩니다.
+`suitable_month`는 `"1월,9월"` 같은 콤마 문자열로 저장됩니다([build_recipes.py:196](../recipes/tools/build_recipes.py#L196)). 이게 나중에 추천 시 [`temporal_fit_score`](../modules/context.py)로 "지금이 이 레시피에 얼마나 제철인가(0/0.5/1)" 판정의 입력이 됩니다.
 
 ---
 
